@@ -32,8 +32,6 @@
         .btn-sm { padding: 2px 10px; font-size: 12px; }
         .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-purple { background: #7c3aed; color: white; }
-        .btn-purple:hover { background: #6d28d9; }
         
         .tree { margin-top: 6px; font-size: 15px; }
         .tree-node { margin-left: 0; }
@@ -85,6 +83,8 @@
         .chart-item .label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
         .chart-item .bar { height: 8px; background: #e9edf2; border-radius: 6px; overflow: hidden; margin-top: 2px; }
         .chart-item .bar .fill { height: 100%; border-radius: 6px; }
+        .progress-mini { height: 6px; background: #e9edf2; border-radius: 4px; overflow: hidden; width: 70px; }
+        .progress-mini .fill { height: 100%; border-radius: 4px; }
         
         .payment-tree .tree-node .node-content .name { font-size: 15px; }
         .payment-tree .tree-node .node-content .badge { font-size: 13px; }
@@ -95,138 +95,37 @@
         .role-badge.viewer { background: #f1f5f9; color: #64748b; }
         .role-badge.invited { background: #fef3c7; color: #d97706; }
         
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            max-width: 420px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .login-box h1 {
-            text-align: center;
-            margin-bottom: 8px;
-            font-size: 28px;
-            color: #1e293b;
-        }
-        .login-box .subtitle {
-            text-align: center;
-            color: #64748b;
-            margin-bottom: 28px;
-            font-size: 14px;
-        }
-        .login-box label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 4px;
-            font-size: 14px;
-            color: #334155;
-        }
-        .login-box input, .login-box select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            transition: border-color 0.3s;
-            margin-bottom: 16px;
-        }
-        .login-box input:focus, .login-box select:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        .login-box .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .login-box .btn-login:hover { transform: scale(1.02); }
-        .login-error {
-            color: #b91c1c;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 12px;
-            display: none;
-        }
-        .login-box .role-info {
-            text-align: center;
-            font-size: 13px;
-            color: #94a3b8;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 10px;
-        }
-        .login-box .role-info strong { color: #1e293b; }
-        
-        .logout-btn {
-            background: #b91c1c;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .logout-btn:hover { background: #991b1b; }
-        
-        .sync-badge {
-            background: #f1f5f9;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #64748b;
-        }
+        .sync-badge { background: #f1f5f9; padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #64748b; }
         .sync-badge.synced { background: #d1fae5; color: #0b8a5e; }
         .sync-badge.error { background: #fee2e2; color: #b91c1c; }
         .sync-badge.loading { background: #fef3c7; color: #d97706; }
         
-        .setup-warning {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-        }
-        .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
-        .setup-warning code {
-            background: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
-        .invite-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid #e9edf2;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+        .invite-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #e9edf2; flex-wrap: wrap; gap: 6px; }
         .invite-list-item .phone { font-weight: 600; }
         .invite-list-item .status { font-size: 13px; }
         .invite-list-item .status.active { color: #0b8a5e; }
         .invite-list-item .status.inactive { color: #94a3b8; }
         
-        .invite-link {
-            color: #7c3aed;
-            font-family: monospace;
-            font-size: 13px;
-            word-break: break-all;
-            background: #f1f5f9;
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
+        .setup-warning { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+        .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
+        .setup-warning code { background: white; padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+        
+        /* Login Screen */
+        #loginScreen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .login-box h1 { text-align: center; margin-bottom: 8px; font-size: 28px; color: #1e293b; }
+        .login-box .subtitle { text-align: center; color: #64748b; margin-bottom: 28px; font-size: 14px; }
+        .login-box label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; color: #334155; }
+        .login-box input, .login-box select { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; transition: border-color 0.3s; margin-bottom: 16px; }
+        .login-box input:focus, .login-box select:focus { border-color: #667eea; outline: none; }
+        .login-box .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .login-box .btn-login:hover { transform: scale(1.02); }
+        .login-error { color: #b91c1c; font-size: 14px; text-align: center; margin-top: 12px; display: none; }
+        .login-box .role-info { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 10px; }
+        .login-box .role-info strong { color: #1e293b; }
+        .logout-btn { background: #b91c1c; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
+        .logout-btn:hover { background: #991b1b; }
+        .invite-link { color: #7c3aed; font-family: monospace; font-size: 13px; word-break: break-all; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; }
         
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .analytics-grid { grid-template-columns: 1fr; } .cashflow-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } .login-box { padding: 24px; } }
@@ -235,13 +134,13 @@
 <body>
 
 <!-- ЭКРАН ВХОДА -->
-<div id="loginScreen" style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:20px;">
+<div id="loginScreen">
     <div class="login-box">
         <h1>📊 Сметы и КС</h1>
         <div class="subtitle">Облачная система управления проектами</div>
         
         <label for="loginRole">👤 Роль</label>
-        <select id="loginRole">
+        <select id="loginRole" onchange="toggleLoginFields()">
             <option value="admin">👑 Администратор</option>
             <option value="viewer">👁️ Руководитель (по ссылке)</option>
         </select>
@@ -363,7 +262,7 @@
     </div>
 </div>
 
-<!-- Модалки -->
+<!-- Модалка приглашения -->
 <div class="modal-overlay" id="inviteModal"><div class="modal">
     <div class="modal-title" id="inviteModalTitle">📨 Создать приглашение</div>
     <label>👤 Имя руководителя</label>
@@ -385,6 +284,7 @@
     </div>
 </div></div>
 
+<!-- Остальные модалки -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal">
     <div class="modal-title" id="modalTitle">Добавить</div>
     <label>Название</label><input id="modalInput">
@@ -435,6 +335,12 @@
 let GIST_ID = localStorage.getItem('gistId') || '';
 let GIST_TOKEN = localStorage.getItem('gistToken') || '';
 
+function toggleLoginFields() {
+    const isViewer = document.getElementById('loginRole').value === 'viewer';
+    document.getElementById('viewerLoginFields').style.display = isViewer ? 'block' : 'none';
+    document.getElementById('adminLoginFields').style.display = isViewer ? 'none' : 'block';
+}
+
 function saveGistSettings() {
     const id = document.getElementById('gistIdInput').value.trim();
     const token = document.getElementById('gistTokenInput').value.trim();
@@ -478,16 +384,10 @@ function showGistInstructions() {
     );
 }
 
-// ============================================================
-// 0.1 СИНХРОНИЗАЦИЯ С GIST
-// ============================================================
-
 function updateSyncStatus(text, type = '') {
     const el = document.getElementById('syncStatus');
-    if (el) {
-        el.textContent = text;
-        el.className = 'sync-badge ' + (type || '');
-    }
+    el.textContent = text;
+    el.className = 'sync-badge ' + (type || '');
 }
 
 async function syncFromGist(silent = false) {
@@ -648,7 +548,7 @@ function checkViewerLink(link) {
         const url = new URL(link);
         code = url.searchParams.get('invite');
     } catch(e) {
-        if (link.length === 12) code = link;
+        if (link && link.length > 10) code = link;
     }
     if (!code) return null;
     const invites = getInvites();
@@ -758,7 +658,6 @@ function updateButtonsByRole() {
     });
 }
 
-// Проверка сессии
 (function checkSession() {
     const session = localStorage.getItem('dashSession');
     if (session) {
@@ -796,7 +695,6 @@ function openInviteModal() {
     document.getElementById('inviteLinkDisplay').value = link;
     document.getElementById('inviteLinkDisplay').dataset.code = code;
     
-    document.getElementById('inviteModalTitle').textContent = '📨 Создать приглашение';
     document.getElementById('inviteModal').style.display = 'flex';
 }
 
@@ -831,7 +729,7 @@ function saveInvite() {
     
     const invites = getInvites();
     if (invites.some(i => i.code === code)) {
-        alert('Такой код уже существует! Обновите страницу.');
+        alert('Такой код уже существует!');
         return;
     }
     
@@ -848,8 +746,7 @@ function saveInvite() {
     saveInvites(invites);
     closeInviteModal();
     renderInvites();
-    
-    alert(`✅ Приглашение создано!\n\n👤 Имя: ${name}\n📱 Телефон: ${phone}\n🔗 Ссылка: ${link}\n\nОтправьте ссылку руководителю.`);
+    alert(`✅ Приглашение создано!\n\n👤 Имя: ${name}\n📱 Телефон: ${phone}\n🔗 Ссылка: ${link}`);
 }
 
 function renderInvites() {
@@ -1607,15 +1504,14 @@ window.revokeInvite = revokeInvite;
 window.restoreInvite = restoreInvite;
 window.copyInviteLink = copyInviteLink;
 window.copyInviteLinkById = copyInviteLinkById;
+window.toggleLoginFields = toggleLoginFields;
 
 if (currentUser.role) {
     render();
     if (isAdmin()) renderInvites();
 }
 
-// ============================================================
-// ПРОВЕРКА ПАРАМЕТРОВ URL ДЛЯ АВТОВХОДА РУКОВОДИТЕЛЯ
-// ============================================================
+// Проверка URL для автовхода
 (function checkUrlForInvite() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('invite');
