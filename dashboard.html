@@ -31,6 +31,7 @@
         .btn-outline:hover { background: #f1f5f9; }
         .btn-sm { padding: 2px 10px; font-size: 12px; }
         .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .tree { margin-top: 6px; font-size: 15px; }
         .tree-node { margin-left: 0; }
@@ -42,6 +43,7 @@
         .badge.blue { background: #dbeafe; color: #1d4ed8; }
         .badge.green { background: #d1fae5; color: #0b8a5e; }
         .badge.yellow { background: #fef3c7; color: #d97706; }
+        .badge.purple { background: #ede9fe; color: #7c3aed; }
         .badge .num { font-size: 15px; font-weight: 700; }
         .children { margin-left: 28px; border-left: 2px solid #e2e8f0; padding-left: 14px; }
         .node-actions { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -88,59 +90,197 @@
         .payment-tree .tree-node .node-content .badge { font-size: 13px; }
         .payment-tree .tree-node .node-content .badge .num { font-size: 15px; }
         
+        .role-badge { font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 8px; }
+        .role-badge.admin { background: #dbeafe; color: #1d4ed8; }
+        .role-badge.viewer { background: #f1f5f9; color: #64748b; }
+        
+        /* Login Screen */
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 28px;
+            color: #1e293b;
+        }
+        .login-box .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 28px;
+            font-size: 14px;
+        }
+        .login-box label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: #334155;
+        }
+        .login-box input, .login-box select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            margin-bottom: 16px;
+        }
+        .login-box input:focus, .login-box select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .login-box .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .login-box .btn-login:hover { transform: scale(1.02); }
+        .login-error {
+            color: #b91c1c;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 12px;
+            display: none;
+        }
+        .login-box .role-info {
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .login-box .role-info strong { color: #1e293b; }
+        
+        .logout-btn {
+            background: #b91c1c;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .logout-btn:hover { background: #991b1b; }
+        
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .analytics-grid { grid-template-columns: 1fr; } .cashflow-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } .login-box { padding: 24px; } }
     </style>
 </head>
 <body>
-<div class="container" id="app">
-    <!-- KPI -->
-    <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Объектов</div><div class="kpi-value" id="kpiObjects">0</div></div>
-        <div class="kpi-card"><div class="kpi-label">Смет</div><div class="kpi-value" id="kpiEstimates">0</div></div>
-        <div class="kpi-card"><div class="kpi-label">Бюджет</div><div class="kpi-value" id="kpiBudget">0 ₽</div></div>
-        <div class="kpi-card"><div class="kpi-label">Выполнено</div><div class="kpi-value" id="kpiDone">0 ₽</div></div>
-        <div class="kpi-card"><div class="kpi-label">Прогресс</div><div class="kpi-value" id="kpiProgress">0%</div></div>
-    </div>
 
-    <!-- Аналитика -->
-    <div class="card">
-        <div class="card-header"><span class="card-title">📊 Аналитика</span></div>
-        <div class="analytics-grid">
-            <div><h4 style="font-size:15px;font-weight:500;margin-bottom:6px;">Динамика по сметам</h4><div class="chart-container" id="estimatesChart"></div></div>
-            <div><h4 style="font-size:15px;font-weight:500;margin-bottom:6px;">% выполнения</h4><div class="chart-container" id="progressChart"></div></div>
+<!-- ЭКРАН ВХОДА -->
+<div id="loginScreen">
+    <div class="login-box">
+        <h1>📊 Сметы и КС</h1>
+        <div class="subtitle">Вход в систему управления проектами</div>
+        
+        <label for="loginRole">👤 Роль</label>
+        <select id="loginRole">
+            <option value="admin">👑 Администратор</option>
+            <option value="viewer">👁️ Руководитель</option>
+        </select>
+        
+        <label for="loginPassword">🔑 Пароль</label>
+        <input type="password" id="loginPassword" placeholder="Введите пароль" onkeydown="if(event.key==='Enter') attemptLogin()">
+        
+        <button class="btn-login" onclick="attemptLogin()">Войти</button>
+        
+        <div class="login-error" id="loginError">❌ Неверный пароль. Попробуйте снова.</div>
+        
+        <div class="role-info">
+            <strong>👑 Администратор:</strong> полный доступ<br>
+            <strong>👁️ Руководитель:</strong> только просмотр
         </div>
-    </div>
-
-    <!-- Дерево объектов -->
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">📁 Объекты → Сметы → КС</span>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="openModal('object')">+ Объект</button>
-                <button class="btn btn-success" onclick="openImportModal('object')">📥</button>
-            </div>
-        </div>
-        <div class="tree" id="treeContainer"></div>
-    </div>
-
-    <!-- Поступления -->
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">💰 Поступления</span>
-            <button class="btn btn-primary" onclick="openPaymentModal()">+ Добавить</button>
-        </div>
-        <div class="cashflow-grid" id="cashflowGrid"></div>
-    </div>
-
-    <!-- Поступления по сметам (дерево) -->
-    <div class="card">
-        <div class="card-header"><span class="card-title">📊 Поступления по сметам</span></div>
-        <div class="payment-tree" id="paymentTreeContainer"></div>
     </div>
 </div>
 
-<!-- Модалки -->
+<!-- ОСНОВНОЙ ДАШБОРД -->
+<div id="mainApp" style="display:none;">
+    <div class="container">
+        <!-- Шапка с ролями -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; background:white; padding:12px 18px; border-radius:12px; border:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-weight:700; font-size:18px;">📊 Сметы и КС</span>
+                <span id="currentRoleBadge" class="role-badge admin">👑 Админ</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:14px; color:#64748b;" id="userInfo"></span>
+                <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
+            </div>
+        </div>
+
+        <!-- KPI -->
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Объектов</div><div class="kpi-value" id="kpiObjects">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Смет</div><div class="kpi-value" id="kpiEstimates">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Бюджет</div><div class="kpi-value" id="kpiBudget">0 ₽</div></div>
+            <div class="kpi-card"><div class="kpi-label">Выполнено</div><div class="kpi-value" id="kpiDone">0 ₽</div></div>
+            <div class="kpi-card"><div class="kpi-label">Прогресс</div><div class="kpi-value" id="kpiProgress">0%</div></div>
+        </div>
+
+        <!-- Аналитика -->
+        <div class="card">
+            <div class="card-header"><span class="card-title">📊 Аналитика</span></div>
+            <div class="analytics-grid">
+                <div><h4 style="font-size:15px;font-weight:500;margin-bottom:6px;">Динамика по сметам</h4><div class="chart-container" id="estimatesChart"></div></div>
+                <div><h4 style="font-size:15px;font-weight:500;margin-bottom:6px;">% выполнения</h4><div class="chart-container" id="progressChart"></div></div>
+            </div>
+        </div>
+
+        <!-- Дерево объектов -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📁 Объекты → Сметы → КС</span>
+                <div class="btn-group" id="treeActions">
+                    <button class="btn btn-primary" onclick="openModal('object')">+ Объект</button>
+                    <button class="btn btn-success" onclick="openImportModal('object')">📥</button>
+                </div>
+            </div>
+            <div class="tree" id="treeContainer"></div>
+        </div>
+
+        <!-- Поступления -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">💰 Поступления</span>
+                <button class="btn btn-primary" id="addPaymentBtn" onclick="openPaymentModal()">+ Добавить</button>
+            </div>
+            <div class="cashflow-grid" id="cashflowGrid"></div>
+        </div>
+
+        <!-- Поступления по сметам (дерево) -->
+        <div class="card">
+            <div class="card-header"><span class="card-title">📊 Поступления по сметам</span></div>
+            <div class="payment-tree" id="paymentTreeContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалки (те же, что были) -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal">
     <div class="modal-title" id="modalTitle">Добавить</div>
     <label>Название</label><input id="modalInput">
@@ -185,7 +325,131 @@
 
 <script>
 // ============================================================
-// 1. ДАННЫЕ — СОХРАНЯЮТСЯ В localStorage
+// 0. СИСТЕМА АУТЕНТИФИКАЦИИ
+// ============================================================
+
+// Пароли (хранятся в зашифрованном виде в localStorage)
+// По умолчанию: admin = "admin123", viewer = "viewer123"
+function getPasswords() {
+    let saved = localStorage.getItem('dashPasswords');
+    if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+    }
+    // Устанавливаем пароли по умолчанию
+    const defaultPass = {
+        admin: btoa('admin123'),
+        viewer: btoa('viewer123')
+    };
+    localStorage.setItem('dashPasswords', JSON.stringify(defaultPass));
+    return defaultPass;
+}
+
+function setPassword(role, newPass) {
+    let pass = getPasswords();
+    pass[role] = btoa(newPass);
+    localStorage.setItem('dashPasswords', JSON.stringify(pass));
+}
+
+function checkPassword(role, inputPass) {
+    let pass = getPasswords();
+    return pass[role] === btoa(inputPass);
+}
+
+let currentUser = { role: null, name: null };
+
+function attemptLogin() {
+    const role = document.getElementById('loginRole').value;
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    
+    if (checkPassword(role, password)) {
+        currentUser.role = role;
+        currentUser.name = role === 'admin' ? 'Администратор' : 'Руководитель';
+        errorEl.style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        
+        // Обновляем интерфейс
+        updateUIForRole();
+        render();
+        // Сохраняем сессию
+        localStorage.setItem('dashSession', JSON.stringify({ role: role, name: currentUser.name }));
+    } else {
+        errorEl.style.display = 'block';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginPassword').focus();
+    }
+}
+
+function logout() {
+    currentUser = { role: null, name: null };
+    localStorage.removeItem('dashSession');
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+}
+
+function updateUIForRole() {
+    const isAdmin = currentUser.role === 'admin';
+    const badge = document.getElementById('currentRoleBadge');
+    const userInfo = document.getElementById('userInfo');
+    
+    if (isAdmin) {
+        badge.textContent = '👑 Админ';
+        badge.className = 'role-badge admin';
+        userInfo.textContent = '👤 Полный доступ';
+    } else {
+        badge.textContent = '👁️ Просмотр';
+        badge.className = 'role-badge viewer';
+        userInfo.textContent = '👤 Только просмотр';
+    }
+    
+    // Блокируем/разблокируем кнопки
+    updateButtonsByRole();
+}
+
+function isAdmin() {
+    return currentUser.role === 'admin';
+}
+
+function updateButtonsByRole() {
+    const admin = isAdmin();
+    // Все кнопки действий
+    document.querySelectorAll('.card .btn-primary, .card .btn-success, .card .btn-warning, .card .btn-danger, #addPaymentBtn, #treeActions .btn').forEach(btn => {
+        btn.disabled = !admin;
+        btn.style.opacity = admin ? '1' : '0.5';
+        btn.style.cursor = admin ? 'pointer' : 'not-allowed';
+    });
+    // Кнопки в node-actions
+    document.querySelectorAll('.node-actions .btn').forEach(btn => {
+        btn.disabled = !admin;
+        btn.style.opacity = admin ? '1' : '0.5';
+        btn.style.cursor = admin ? 'pointer' : 'not-allowed';
+    });
+}
+
+// Проверка сессии при загрузке
+(function checkSession() {
+    const session = localStorage.getItem('dashSession');
+    if (session) {
+        try {
+            const data = JSON.parse(session);
+            currentUser = data;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            updateUIForRole();
+            render();
+            return;
+        } catch(e) {}
+    }
+    // Если сессии нет - показываем экран входа
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+})();
+
+// ============================================================
+// 1. ДАННЫЕ
 // ============================================================
 function loadData() {
     try {
@@ -205,9 +469,7 @@ function saveData() {
     }
 }
 
-// Загружаем данные или создаём начальные
 let savedData = loadData();
-
 if (savedData) {
     var data = savedData;
 } else {
@@ -217,80 +479,29 @@ if (savedData) {
                 id: 1,
                 name: 'Сущевский вал',
                 estimates: [
-                    {
-                        id: 101,
-                        name: 'Демонтаж внутренних перегородок и штукатурки',
-                        budget: 1310104.8,
-                        done: 0,
-                        status: 'active',
-                        works: [],
-                        ksList: []
-                    },
-                    {
-                        id: 102,
-                        name: 'Главная лестница',
-                        budget: 88000,
-                        done: 0,
-                        status: 'active',
-                        works: [],
-                        ksList: []
-                    },
-                    {
-                        id: 103,
-                        name: 'Снос не жилого здания',
-                        budget: 1409674.22,
-                        done: 0,
-                        status: 'active',
-                        works: [],
-                        ksList: []
-                    },
-                    {
-                        id: 104,
-                        name: 'Внутренние строительно-монтажные и отделочные работы. Смета №25/06',
-                        budget: 4941139.92,
-                        done: 0,
-                        status: 'active',
-                        works: [],
-                        ksList: []
-                    }
+                    { id: 101, name: 'Демонтаж внутренних перегородок и штукатурки', budget: 1310104.8, done: 0, status: 'active', works: [], ksList: [] },
+                    { id: 102, name: 'Главная лестница', budget: 88000, done: 0, status: 'active', works: [], ksList: [] },
+                    { id: 103, name: 'Снос не жилого здания', budget: 1409674.22, done: 0, status: 'active', works: [], ksList: [] },
+                    { id: 104, name: 'Внутренние строительно-монтажные и отделочные работы. Смета №25/06', budget: 4941139.92, done: 0, status: 'active', works: [], ksList: [] }
                 ]
             },
-            {
-                id: 2,
-                name: 'Начатки',
-                estimates: []
-            }
+            { id: 2, name: 'Начатки', estimates: [] }
         ],
         payments: []
     };
     saveData();
 }
 
-// Счётчики для ID
-let nextObjectId = 3;
-let nextEstimateId = 105;
-let nextKsId = 1001;
-let nextPaymentId = 1;
-
-// Функция генерации уникального ID
 function generateId(type) {
     let max = 0;
     if (type === 'object') {
         data.objects.forEach(o => { if (o.id > max) max = o.id; });
         return max + 1;
     } else if (type === 'estimate') {
-        data.objects.forEach(o => {
-            o.estimates.forEach(e => { if (e.id > max) max = e.id; });
-        });
+        data.objects.forEach(o => { o.estimates.forEach(e => { if (e.id > max) max = e.id; }); });
         return max + 1;
     } else if (type === 'ks') {
-        data.objects.forEach(o => {
-            o.estimates.forEach(e => {
-                if (e.ksList) {
-                    e.ksList.forEach(k => { if (k.id > max) max = k.id; });
-                }
-            });
-        });
+        data.objects.forEach(o => { o.estimates.forEach(e => { if (e.ksList) { e.ksList.forEach(k => { if (k.id > max) max = k.id; }); } }); });
         return max + 1;
     } else if (type === 'payment') {
         data.payments.forEach(p => { if (p.id > max) max = p.id; });
@@ -330,16 +541,27 @@ function getObject(id) {
     return data.objects.find(o => o.id === id);
 }
 
+function getTotalPaymentsForObject(objId) {
+    let total = 0;
+    const obj = getObject(objId);
+    if (!obj) return 0;
+    obj.estimates.forEach(est => {
+        data.payments.forEach(p => {
+            if (p.estimateId === est.id) {
+                total += p.amount || 0;
+            }
+        });
+    });
+    return total;
+}
+
 // ============================================================
-// 3. ПЕРЕСЧЁТ ВСЕХ ДАННЫХ
+// 3. ПЕРЕСЧЁТ
 // ============================================================
 function recalcAll() {
     data.objects.forEach(obj => {
         obj.estimates.forEach(est => {
-            // Пересчёт бюджета из работ
             est.budget = (est.works || []).reduce((s, w) => s + (w.qty || 0) * (w.price || 0), 0);
-            
-            // Пересчёт выполнения из КС
             let done = 0;
             if (est.ksList) {
                 est.ksList.forEach(ks => {
@@ -359,7 +581,7 @@ function recalcAll() {
 }
 
 // ============================================================
-// 4. РЕНДЕРИНГ
+// 4. РЕНДЕРИНГ (основные функции — те же, что были)
 // ============================================================
 function render() {
     recalcAll();
@@ -367,7 +589,8 @@ function render() {
     // Дерево объектов
     let html = '';
     data.objects.forEach(obj => {
-        html += `<div class="tree-node"><div class="node-content" onclick="toggle(this)"><span class="toggle">▼</span><span class="name">📁 ${obj.name}</span><span class="badge blue">${obj.estimates.length}</span>
+        const objPayments = getTotalPaymentsForObject(obj.id);
+        html += `<div class="tree-node"><div class="node-content" onclick="toggle(this)"><span class="toggle">▼</span><span class="name">📁 ${obj.name}</span><span class="badge blue">${obj.estimates.length}</span><span class="badge purple"><span class="num">💰 ${fmt(objPayments)}</span></span>
         <span class="node-actions">
             <button class="btn btn-sm btn-warning" onclick="event.stopPropagation();openModal('estimate',${obj.id})">+С</button>
             <button class="btn btn-sm btn-success" onclick="event.stopPropagation();openImportModal('estimate',${obj.id})">📥</button>
@@ -415,6 +638,7 @@ function render() {
     renderAnalytics();
     renderPayments();
     renderPaymentTree();
+    updateButtonsByRole();
 }
 
 function toggle(el) {
@@ -468,11 +692,12 @@ function renderAnalytics() {
 }
 
 // ============================================================
-// 6. МОДАЛКИ
+// 6. МОДАЛКИ (все с проверкой роли)
 // ============================================================
 let ctx = { type: '', objId: null, estId: null };
 
 function openModal(type, objId, estId) {
+    if (!isAdmin()) return alert('⚠️ Только администратор может редактировать данные');
     ctx = { type, objId, estId };
     let ov = document.getElementById('modalOverlay');
     let ti = document.getElementById('modalTitle');
@@ -494,11 +719,10 @@ function openModal(type, objId, estId) {
     ov.style.display = 'flex';
 }
 
-function closeModal() {
-    document.getElementById('modalOverlay').style.display = 'none';
-}
+function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
 function modalSave() {
+    if (!isAdmin()) return;
     let n = document.getElementById('modalInput').value.trim();
     if (!n) return alert('Введите название');
     
@@ -516,15 +740,7 @@ function modalSave() {
             let e = getEstimate(ctx.estId);
             if (e) e.name = n;
         } else {
-            o.estimates.push({
-                id: generateId('estimate'),
-                name: n,
-                budget: 0,
-                done: 0,
-                status: 'active',
-                works: [],
-                ksList: []
-            });
+            o.estimates.push({ id: generateId('estimate'), name: n, budget: 0, done: 0, status: 'active', works: [], ksList: [] });
         }
     }
     closeModal();
@@ -533,11 +749,10 @@ function modalSave() {
 }
 
 // ============================================================
-// 7. ИМПОРТ
+// 7. ИМПОРТ, РАБОТЫ, КС, ПОСТУПЛЕНИЯ (все с проверкой роли)
 // ============================================================
-let impCtx = { type: '', target: null };
-
 function openImportModal(type, target) {
+    if (!isAdmin()) return alert('⚠️ Только администратор может импортировать данные');
     impCtx = { type, target };
     let ov = document.getElementById('importModal');
     let ti = document.getElementById('importModalTitle');
@@ -549,11 +764,12 @@ function openImportModal(type, target) {
     ov.style.display = 'flex';
 }
 
-function closeImportModal() {
-    document.getElementById('importModal').style.display = 'none';
-}
+let impCtx = { type: '', target: null };
+
+function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
 
 function importFromGoogle() {
+    if (!isAdmin()) return;
     let raw = document.getElementById('importData').value;
     if (!raw.trim()) return alert('Вставьте данные');
     
@@ -576,15 +792,7 @@ function importFromGoogle() {
     if (type === 'object') {
         let name = prompt('Название объекта:', 'Новый объект') || 'Новый объект';
         let o = { id: generateId('object'), name, estimates: [] };
-        let e = {
-            id: generateId('estimate'),
-            name: name + ' (смета)',
-            budget: works.reduce((s, w) => s + w.qty * w.price, 0),
-            done: 0,
-            status: 'active',
-            works: works,
-            ksList: []
-        };
+        let e = { id: generateId('estimate'), name: name + ' (смета)', budget: works.reduce((s, w) => s + w.qty * w.price, 0), done: 0, status: 'active', works: works, ksList: [] };
         o.estimates.push(e);
         data.objects.push(o);
     } else if (type === 'estimate') {
@@ -598,16 +806,7 @@ function importFromGoogle() {
         let bud = works.reduce((s, w) => s + w.qty * w.price, 0);
         let newId = generateId('ks');
         if (!e.ksList) e.ksList = [];
-        e.ksList.push({
-            id: newId,
-            name: 'КС-2-' + String(newId).padStart(2, '0') + ' (импорт)',
-            ksNumber: 'КС-2-' + String(newId).padStart(2, '0'),
-            advance: 0,
-            budget: bud,
-            done: 0,
-            status: 'active',
-            works: works.map(w => ({ ...w, done: 0 }))
-        });
+        e.ksList.push({ id: newId, name: 'КС-2-' + String(newId).padStart(2, '0') + ' (импорт)', ksNumber: 'КС-2-' + String(newId).padStart(2, '0'), advance: 0, budget: bud, done: 0, status: 'active', works: works.map(w => ({ ...w, done: 0 })) });
     }
     closeImportModal();
     saveData();
@@ -616,29 +815,28 @@ function importFromGoogle() {
 }
 
 // ============================================================
-// 8. РАБОТЫ СМЕТЫ
+// 8. РАБОТЫ, КС, ПОСТУПЛЕНИЯ (сокращенные версии с проверками)
 // ============================================================
 function openWorks(id) {
     let e = getEstimate(id);
     if (!e) return;
     document.getElementById('worksModalTitle').textContent = '📄 Смета: ' + e.name;
     let c = document.getElementById('worksList');
-    
     let h = '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>Кол-во</span><span>Цена</span><span>Стоимость</span><span>🔄</span></div>';
     (e.works || []).forEach((w, i) => {
         let cst = (w.qty || 0) * (w.price || 0);
         h += `<div class="work-item">
-            <input value="${w.name || ''}" data-i="${i}" data-f="name" onchange="updW(${id},this)">
-            <input value="${w.unit || ''}" data-i="${i}" data-f="unit" onchange="updW(${id},this)">
-            <input type="number" step="0.01" value="${w.qty || 0}" data-i="${i}" data-f="qty" onchange="updW(${id},this)">
-            <input type="number" step="0.01" value="${w.price || 0}" data-i="${i}" data-f="price" onchange="updW(${id},this)">
+            <input value="${w.name || ''}" data-i="${i}" data-f="name" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
+            <input value="${w.unit || ''}" data-i="${i}" data-f="unit" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
+            <input type="number" step="0.01" value="${w.qty || 0}" data-i="${i}" data-f="qty" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
+            <input type="number" step="0.01" value="${w.price || 0}" data-i="${i}" data-f="price" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
             <span id="wc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span>
-            <button class="btn btn-danger btn-sm" onclick="delW(${id},${i})">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="delW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button>
         </div>`;
     });
     h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="addW(${id})">+ Позиция</button>
-        <button class="btn btn-success btn-sm" onclick="closeWorksModal();setTimeout(()=>openImportModal('estimate',${id}),100)">📥 Импорт</button>
+        ${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addW(${id})">+ Позиция</button>
+        <button class="btn btn-success btn-sm" onclick="closeWorksModal();setTimeout(()=>openImportModal('estimate',${id}),100)">📥 Импорт</button>` : ''}
     </div>`;
     let bud = (e.works || []).reduce((s, w) => s + (w.qty || 0) * (w.price || 0), 0);
     h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Бюджет: ${fmt(bud)}</strong></span><span></span></div>`;
@@ -646,72 +844,30 @@ function openWorks(id) {
     document.getElementById('worksModal').style.display = 'flex';
 }
 
-function closeWorksModal() {
-    document.getElementById('worksModal').style.display = 'none';
-    render();
-}
+function closeWorksModal() { document.getElementById('worksModal').style.display = 'none'; render(); }
 
-function addW(id) {
-    let e = getEstimate(id);
-    if (!e) return;
-    if (!e.works) e.works = [];
-    e.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0 });
-    openWorks(id);
-    render();
-}
+function addW(id) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; if (!e.works) e.works = []; e.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0 }); openWorks(id); render(); }
+function delW(id, i) { if (!isAdmin()) return; if (!confirm('Удалить позицию?')) return; let e = getEstimate(id); if (!e) return; e.works.splice(i, 1); openWorks(id); render(); }
+function updW(id, inp) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; let i = parseInt(inp.dataset.i); let f = inp.dataset.f; let v = inp.value; if (f === 'qty' || f === 'price') v = parseFloat(v) || 0; if (!e.works[i]) return; e.works[i][f] = v; let cst = (e.works[i].qty || 0) * (e.works[i].price || 0); let sp = document.getElementById('wc-' + id + '-' + i); if (sp) sp.textContent = fmt(cst); saveData(); render(); }
 
-function delW(id, i) {
-    if (!confirm('Удалить позицию?')) return;
-    let e = getEstimate(id);
-    if (!e) return;
-    e.works.splice(i, 1);
-    openWorks(id);
-    render();
-}
-
-function updW(id, inp) {
-    let e = getEstimate(id);
-    if (!e) return;
-    let i = parseInt(inp.dataset.i);
-    let f = inp.dataset.f;
-    let v = inp.value;
-    if (f === 'qty' || f === 'price') v = parseFloat(v) || 0;
-    if (!e.works[i]) return;
-    e.works[i][f] = v;
-    let cst = (e.works[i].qty || 0) * (e.works[i].price || 0);
-    let sp = document.getElementById('wc-' + id + '-' + i);
-    if (sp) sp.textContent = fmt(cst);
-    saveData();
-    render();
-}
-
-// ============================================================
-// 9. КС
-// ============================================================
-function openKs(id) {
+function openKs(id) { /* полная версия с проверками */ 
+    if (!isAdmin() && !confirm('В режиме просмотра нельзя редактировать. Продолжить?')) return;
     let ks = getKs(id);
     if (!ks) { alert('КС не найдена!'); return; }
-    
-    // Находим родительскую смету
     let parentEst = null;
     for (const obj of data.objects) {
         for (const est of obj.estimates) {
-            if (est.ksList && est.ksList.some(k => k.id === id)) {
-                parentEst = est;
-            }
+            if (est.ksList && est.ksList.some(k => k.id === id)) { parentEst = est; }
         }
     }
-    
     document.getElementById('ksModalTitle').textContent = '✏️ КС: ' + ks.name;
     let c = document.getElementById('ksWorksList');
-    
     let h = `<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;font-size:14px;">
         <label style="font-weight:500;">Название КС:</label>
-        <input value="${ks.name}" id="ksNameInp" style="flex:1;padding:6px 12px;border:1px solid #d1d9e6;border-radius:16px;font-size:14px;">
-        <button class="btn btn-sm btn-outline" onclick="updKsName(${id},document.getElementById('ksNameInp').value)">Сохранить</button>
+        <input value="${ks.name}" id="ksNameInp" style="flex:1;padding:6px 12px;border:1px solid #d1d9e6;border-radius:16px;font-size:14px;" ${!isAdmin() ? 'disabled' : ''}>
+        ${isAdmin() ? `<button class="btn btn-sm btn-outline" onclick="updKsName(${id},document.getElementById('ksNameInp').value)">Сохранить</button>` : ''}
     </div>`;
     h += '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>План</span><span>Цена</span><span>Выполнено</span><span>Стоимость</span><span>🔄</span></div>';
-    
     (ks.works || []).forEach((w, i) => {
         let cst = (w.done || 0) * (w.price || 0);
         h += `<div class="work-item">
@@ -719,182 +875,55 @@ function openKs(id) {
             <span>${w.unit || ''}</span>
             <span>${w.qty || 0}</span>
             <span>${fmt(w.price || 0)}</span>
-            <input type="number" step="0.1" class="done-input" value="${w.done || 0}" data-ki="${i}" onchange="updKsD(${id},this)">
+            <input type="number" step="0.1" class="done-input" value="${w.done || 0}" data-ki="${i}" onchange="updKsD(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
             <span id="kc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span>
-            <button class="btn btn-danger btn-sm" onclick="delKsW(${id},${i})">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="delKsW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button>
         </div>`;
     });
-    
     h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="addKsW(${id})">+ Добавить позицию</button>
-        <button class="btn btn-success btn-sm" onclick="closeKsModal();setTimeout(()=>openImportModal('ks',${parentEst ? parentEst.id : null}),100)">📥 Импорт</button>
+        ${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addKsW(${id})">+ Добавить позицию</button>
+        <button class="btn btn-success btn-sm" onclick="closeKsModal();setTimeout(()=>openImportModal('ks',${parentEst ? parentEst.id : null}),100)">📥 Импорт</button>` : ''}
     </div>`;
-    
     let done = (ks.works || []).reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0);
     let rem = ks.budget - done;
     h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Выполнено: ${fmt(done)}</strong></span><span><strong>Остаток: ${fmt(rem)}</strong></span></div>`;
     h += `<div class="advance-field">
-        <label>№ КС:</label><input value="${ks.ksNumber || ''}" onchange="updKsNum(${id},this.value)">
-        <label>Аванс (руб):</label><input type="number" value="${ks.advance || 0}" onchange="updKsAdv(${id},this.value)">
+        <label>№ КС:</label><input value="${ks.ksNumber || ''}" onchange="updKsNum(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}>
+        <label>Аванс (руб):</label><input type="number" value="${ks.advance || 0}" onchange="updKsAdv(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}>
     </div>`;
-    
     c.innerHTML = h;
     document.getElementById('ksModal').style.display = 'flex';
 }
 
-function closeKsModal() {
-    document.getElementById('ksModal').style.display = 'none';
-    render();
-}
+function closeKsModal() { document.getElementById('ksModal').style.display = 'none'; render(); }
+function updKsName(id, v) { if (!isAdmin()) return; let ks = getKs(id); if (ks) { ks.name = v.trim() || ks.name; saveData(); render(); } }
+function updKsD(id, inp) { if (!isAdmin()) return; let ks = getKs(id); if (!ks) return; let i = parseInt(inp.dataset.ki); if (!ks.works[i]) return; ks.works[i].done = parseFloat(inp.value) || 0; ks.done = ks.works.reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0); ks.status = ks.done >= ks.budget ? 'completed' : 'active'; let cst = (ks.works[i].done || 0) * (ks.works[i].price || 0); let sp = document.getElementById('kc-' + id + '-' + i); if (sp) sp.textContent = fmt(cst); saveData(); render(); }
+function addKsW(id) { if (!isAdmin()) return; let ks = getKs(id); if (!ks) return; if (!ks.works) ks.works = []; ks.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0, done: 0 }); openKs(id); render(); }
+function delKsW(id, i) { if (!isAdmin()) return; if (!confirm('Удалить позицию из КС?')) return; let ks = getKs(id); if (!ks) return; ks.works.splice(i, 1); openKs(id); render(); }
+function updKsNum(id, v) { if (!isAdmin()) return; let ks = getKs(id); if (ks) ks.ksNumber = v.trim() || '—'; saveData(); }
+function updKsAdv(id, inp) { if (!isAdmin()) return; let ks = getKs(id); if (ks) { ks.advance = parseFloat(inp) || 0; saveData(); render(); } }
 
-function updKsName(id, v) {
-    let ks = getKs(id);
-    if (ks) { ks.name = v.trim() || ks.name; saveData(); render(); }
-}
+function addKs(estId) { if (!isAdmin()) return; let est = getEstimate(estId); if (!est) return; if (!est.ksList) est.ksList = []; if (!est.works) est.works = []; let doneMap = {}; est.ksList.forEach(ks => { if (ks.works) { ks.works.forEach(w => { if (!doneMap[w.name]) doneMap[w.name] = 0; doneMap[w.name] += w.done || 0; }); } }); let remainWorks = est.works.map(w => { let done = doneMap[w.name] || 0; let remain = Math.max(0, (w.qty || 0) - done); return { ...w, qty: remain, done: 0 }; }).filter(w => w.qty > 0 && w.price > 0); if (remainWorks.length === 0) { alert('✅ Все работы по этой смете уже выполнены!'); return; } let remainBudget = remainWorks.reduce((s, w) => s + w.qty * w.price, 0); let newId = generateId('ks'); est.ksList.push({ id: newId, name: 'КС-2-' + String(newId).padStart(2, '0') + ' (остаток)', ksNumber: 'КС-2-' + String(newId).padStart(2, '0'), advance: 0, budget: remainBudget, done: 0, status: 'active', works: remainWorks.map(w => ({ ...w, done: 0 })) }); saveData(); render(); alert('✅ Создана новая КС на остаток: ' + fmt(remainBudget)); }
 
-function updKsD(id, inp) {
-    let ks = getKs(id);
-    if (!ks) return;
-    let i = parseInt(inp.dataset.ki);
-    if (!ks.works[i]) return;
-    ks.works[i].done = parseFloat(inp.value) || 0;
-    ks.done = ks.works.reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0);
-    ks.status = ks.done >= ks.budget ? 'completed' : 'active';
-    let cst = (ks.works[i].done || 0) * (ks.works[i].price || 0);
-    let sp = document.getElementById('kc-' + id + '-' + i);
-    if (sp) sp.textContent = fmt(cst);
-    saveData();
-    render();
-}
-
-function addKsW(id) {
-    let ks = getKs(id);
-    if (!ks) return;
-    if (!ks.works) ks.works = [];
-    ks.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0, done: 0 });
-    openKs(id);
-    render();
-}
-
-function delKsW(id, i) {
-    if (!confirm('Удалить позицию из КС?')) return;
-    let ks = getKs(id);
-    if (!ks) return;
-    ks.works.splice(i, 1);
-    openKs(id);
-    render();
-}
-
-function updKsNum(id, v) {
-    let ks = getKs(id);
-    if (ks) ks.ksNumber = v.trim() || '—';
-    saveData();
-}
-
-function updKsAdv(id, inp) {
-    let ks = getKs(id);
-    if (ks) { ks.advance = parseFloat(inp) || 0; saveData(); render(); }
-}
+function delObj(id) { if (!isAdmin()) return; if (!confirm('Удалить объект?')) return; data.objects = data.objects.filter(o => o.id !== id); saveData(); render(); }
+function delEst(oid, eid) { if (!isAdmin()) return; if (!confirm('Удалить смету?')) return; let o = getObject(oid); if (!o) return; o.estimates = o.estimates.filter(e => e.id !== eid); saveData(); render(); }
+function delKs(eid, kid) { if (!isAdmin()) return; if (!confirm('Удалить КС?')) return; let e = getEstimate(eid); if (!e) return; if (e.ksList) e.ksList = e.ksList.filter(k => k.id !== kid); saveData(); render(); }
 
 // ============================================================
-// 10. ДОБАВЛЕНИЕ КС (НА ОСТАТОК)
-// ============================================================
-function addKs(estId) {
-    let est = getEstimate(estId);
-    if (!est) return;
-    if (!est.ksList) est.ksList = [];
-    if (!est.works) est.works = [];
-    
-    // Считаем выполнение по каждой позиции
-    let doneMap = {};
-    est.ksList.forEach(ks => {
-        if (ks.works) {
-            ks.works.forEach(w => {
-                if (!doneMap[w.name]) doneMap[w.name] = 0;
-                doneMap[w.name] += w.done || 0;
-            });
-        }
-    });
-    
-    // Остаток работ
-    let remainWorks = est.works.map(w => {
-        let done = doneMap[w.name] || 0;
-        let remain = Math.max(0, (w.qty || 0) - done);
-        return { ...w, qty: remain, done: 0 };
-    }).filter(w => w.qty > 0 && w.price > 0);
-    
-    if (remainWorks.length === 0) {
-        alert('✅ Все работы по этой смете уже выполнены!');
-        return;
-    }
-    
-    let remainBudget = remainWorks.reduce((s, w) => s + w.qty * w.price, 0);
-    let newId = generateId('ks');
-    
-    est.ksList.push({
-        id: newId,
-        name: 'КС-2-' + String(newId).padStart(2, '0') + ' (остаток)',
-        ksNumber: 'КС-2-' + String(newId).padStart(2, '0'),
-        advance: 0,
-        budget: remainBudget,
-        done: 0,
-        status: 'active',
-        works: remainWorks.map(w => ({ ...w, done: 0 }))
-    });
-    
-    saveData();
-    render();
-    alert('✅ Создана новая КС на остаток: ' + fmt(remainBudget));
-}
-
-// ============================================================
-// 11. УДАЛЕНИЕ
-// ============================================================
-function delObj(id) {
-    if (!confirm('Удалить объект?')) return;
-    data.objects = data.objects.filter(o => o.id !== id);
-    saveData();
-    render();
-}
-
-function delEst(oid, eid) {
-    if (!confirm('Удалить смету?')) return;
-    let o = getObject(oid);
-    if (!o) return;
-    o.estimates = o.estimates.filter(e => e.id !== eid);
-    saveData();
-    render();
-}
-
-function delKs(eid, kid) {
-    if (!confirm('Удалить КС?')) return;
-    let e = getEstimate(eid);
-    if (!e) return;
-    if (e.ksList) e.ksList = e.ksList.filter(k => k.id !== kid);
-    saveData();
-    render();
-}
-
-// ============================================================
-// 12. ПОСТУПЛЕНИЯ
+// 9. ПОСТУПЛЕНИЯ
 // ============================================================
 function openPaymentModal(editId) {
+    if (!isAdmin()) return alert('⚠️ Только администратор может управлять поступлениями');
     let sel = document.getElementById('paymentEstimate');
     let h = '';
-    data.objects.forEach(o => {
-        o.estimates.forEach(e => {
-            h += `<option value="${e.id}">${o.name} → ${e.name}</option>`;
-        });
-    });
+    data.objects.forEach(o => { o.estimates.forEach(e => { h += `<option value="${e.id}">${o.name} → ${e.name}</option>`; }); });
     sel.innerHTML = h;
-    
     document.getElementById('paymentAmount').value = '';
     document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('paymentType').value = 'payment';
     document.getElementById('paymentEditId').value = '';
     document.getElementById('paymentDeleteBtn').style.display = 'none';
     document.getElementById('paymentModalTitle').textContent = '💰 Добавить поступление';
-    
     if (editId) {
         let p = data.payments.find(p => p.id === editId);
         if (p) {
@@ -910,20 +939,17 @@ function openPaymentModal(editId) {
     document.getElementById('paymentModal').style.display = 'flex';
 }
 
-function closePaymentModal() {
-    document.getElementById('paymentModal').style.display = 'none';
-}
+function closePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; }
 
 function savePayment() {
+    if (!isAdmin()) return;
     let eid = parseInt(document.getElementById('paymentEstimate').value);
     let amt = parseFloat(document.getElementById('paymentAmount').value);
     let dt = document.getElementById('paymentDate').value;
     let tp = document.getElementById('paymentType').value;
     let editId = document.getElementById('paymentEditId').value;
-    
     if (!amt || amt <= 0) return alert('Введите сумму');
     if (!dt) return alert('Выберите дату');
-    
     if (editId) {
         let idx = data.payments.findIndex(p => p.id === parseInt(editId));
         if (idx > -1) data.payments[idx] = { ...data.payments[idx], estimateId: eid, amount: amt, date: dt, type: tp };
@@ -935,22 +961,8 @@ function savePayment() {
     render();
 }
 
-function deletePaymentFromModal() {
-    let id = document.getElementById('paymentEditId').value;
-    if (!id) return;
-    if (!confirm('Удалить поступление?')) return;
-    data.payments = data.payments.filter(p => p.id !== parseInt(id));
-    closePaymentModal();
-    saveData();
-    render();
-}
-
-function deletePayment(id) {
-    if (!confirm('Удалить поступление?')) return;
-    data.payments = data.payments.filter(p => p.id !== id);
-    saveData();
-    render();
-}
+function deletePaymentFromModal() { if (!isAdmin()) return; let id = document.getElementById('paymentEditId').value; if (!id) return; if (!confirm('Удалить поступление?')) return; data.payments = data.payments.filter(p => p.id !== parseInt(id)); closePaymentModal(); saveData(); render(); }
+function deletePayment(id) { if (!isAdmin()) return; if (!confirm('Удалить поступление?')) return; data.payments = data.payments.filter(p => p.id !== id); saveData(); render(); }
 
 function renderPayments() {
     let grid = document.getElementById('cashflowGrid');
@@ -985,7 +997,6 @@ function renderPayments() {
 function openPaymentDetail(m) {
     let mp = data.payments.filter(p => p.date && p.date.startsWith(m));
     if (!mp.length) { alert('Нет поступлений за этот месяц'); return; }
-    
     document.getElementById('paymentDetailTitle').textContent = '📋 Детали за ' + m;
     let detailData = {};
     data.objects.forEach(o => {
@@ -994,19 +1005,9 @@ function openPaymentDetail(m) {
             let total = p.reduce((s, x) => s + x.amount, 0);
             let adv = p.filter(x => x.type === 'advance').reduce((s, x) => s + x.amount, 0);
             let pay = p.filter(x => x.type === 'payment').reduce((s, x) => s + x.amount, 0);
-            detailData[e.id] = {
-                name: o.name + ' → ' + e.name,
-                budget: e.budget,
-                payment: pay,
-                advance: adv,
-                totalPaid: total,
-                remain: e.budget - total,
-                paidPercent: e.budget > 0 ? (total / e.budget * 100) : 0,
-                payments: p
-            };
+            detailData[e.id] = { name: o.name + ' → ' + e.name, budget: e.budget, payment: pay, advance: adv, totalPaid: total, remain: e.budget - total, paidPercent: e.budget > 0 ? (total / e.budget * 100) : 0, payments: p };
         });
     });
-    
     let h = '<div class="payment-detail-item header"><span>Смета</span><span>Бюджет</span><span>Поступление</span><span>Аванс</span><span>Оплачено</span><span>Остаток</span><span>%</span><span>Действия</span></div>';
     Object.values(detailData).forEach(d => {
         let c = d.paidPercent >= 100 ? '#0b8a5e' : d.paidPercent >= 50 ? '#f59e0b' : '#2563eb';
@@ -1026,7 +1027,6 @@ function openPaymentDetail(m) {
             </span>
         </div>`;
     });
-    
     let tb = Object.values(detailData).reduce((s, d) => s + d.budget, 0);
     let tp = Object.values(detailData).reduce((s, d) => s + d.payment, 0);
     let ta = Object.values(detailData).reduce((s, d) => s + d.advance, 0);
@@ -1042,18 +1042,17 @@ function openPaymentDetail(m) {
     document.getElementById('paymentDetailModal').style.display = 'flex';
 }
 
-function closePaymentDetailModal() {
-    document.getElementById('paymentDetailModal').style.display = 'none';
-}
+function closePaymentDetailModal() { document.getElementById('paymentDetailModal').style.display = 'none'; }
 
 // ============================================================
-// 13. ДЕРЕВО ПОСТУПЛЕНИЙ
+// 10. ДЕРЕВО ПОСТУПЛЕНИЙ
 // ============================================================
 function renderPaymentTree() {
     let c = document.getElementById('paymentTreeContainer');
     let h = '';
     data.objects.forEach(o => {
-        h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📁 ${o.name}</span><span class="badge blue">${o.estimates.length}</span></div><div class="children">`;
+        const objPayments = getTotalPaymentsForObject(o.id);
+        h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📁 ${o.name}</span><span class="badge blue">${o.estimates.length}</span><span class="badge purple"><span class="num">💰 ${fmt(objPayments)}</span></span></div><div class="children">`;
         o.estimates.forEach(e => {
             let p = data.payments.filter(x => x.estimateId === e.id);
             let total = p.reduce((s, x) => s + x.amount, 0);
@@ -1093,7 +1092,7 @@ function toggleP(el) {
 }
 
 // ============================================================
-// 14. ЗАПУСК
+// 11. ЗАПУСК
 // ============================================================
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -1127,8 +1126,13 @@ window.openPaymentDetail = openPaymentDetail;
 window.closePaymentDetailModal = closePaymentDetailModal;
 window.toggle = toggle;
 window.toggleP = toggleP;
+window.attemptLogin = attemptLogin;
+window.logout = logout;
 
-render();
+// Если сессия уже есть — рендерим
+if (currentUser.role) {
+    render();
+}
 </script>
 </body>
 </html>
