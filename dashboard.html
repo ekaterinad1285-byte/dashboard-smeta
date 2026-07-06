@@ -8,16 +8,13 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #f1f5f9; color: #1e293b; padding: 16px; }
         .container { max-width: 1400px; margin: 0 auto; }
-        
         .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
         .kpi-card { background: white; border-radius: 12px; padding: 16px 18px; border: 1px solid #e2e8f0; }
         .kpi-label { font-size: 14px; color: #64748b; font-weight: 500; }
         .kpi-value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #0f172a; }
-        
         .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
         .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
         .card-title { font-size: 16px; font-weight: 600; }
-        
         .btn { padding: 6px 16px; border-radius: 20px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; }
         .btn-primary { background: #2563eb; color: white; }
         .btn-primary:hover { background: #1d4ed8; }
@@ -32,7 +29,6 @@
         .btn-sm { padding: 2px 10px; font-size: 12px; }
         .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
         .tree { margin-top: 6px; font-size: 15px; }
         .tree-node { margin-left: 0; }
         .node-content { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
@@ -48,7 +44,6 @@
         .children { margin-left: 28px; border-left: 2px solid #e2e8f0; padding-left: 14px; }
         .node-actions { display: flex; gap: 4px; flex-wrap: wrap; }
         .node-actions .btn { padding: 2px 10px; font-size: 12px; }
-        
         .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); justify-content: center; align-items: center; z-index: 999; }
         .modal { background: white; border-radius: 16px; padding: 24px; max-width: 650px; width: 95%; max-height: 90vh; overflow-y: auto; }
         .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
@@ -56,7 +51,6 @@
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px 14px; border-radius: 20px; border: 1px solid #d1d9e6; margin-top: 4px; font-size: 14px; }
         .modal textarea { border-radius: 12px; min-height: 120px; font-family: monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
-        
         .work-item { display: grid; grid-template-columns: 2.5fr 0.7fr 0.7fr 0.9fr 0.9fr 0.5fr; gap: 6px; padding: 6px 0; border-bottom: 1px solid #e9edf2; font-size: 14px; align-items: center; }
         .work-item.header { font-weight: 600; color: #475569; border-bottom: 2px solid #d1d9e6; font-size: 14px; }
         .work-item input { width: 100%; padding: 5px 8px; border: 1px solid #d1d9e6; border-radius: 10px; font-size: 14px; }
@@ -66,33 +60,27 @@
         .advance-field { display: flex; gap: 12px; margin-top: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 12px; flex-wrap: wrap; align-items: center; font-size: 14px; }
         .advance-field label { font-weight: 500; font-size: 14px; }
         .advance-field input { width: 160px; padding: 6px 12px; border: 1px solid #d1d9e6; border-radius: 16px; font-size: 14px; }
-        
         .cashflow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
         .cf-item { background: #f8fafc; border-radius: 12px; padding: 14px 16px; text-align: center; cursor: pointer; }
         .cf-item:hover { background: #e9edf2; }
         .cf-month { font-size: 14px; color: #64748b; font-weight: 500; }
         .cf-value { font-weight: 700; font-size: 22px; margin-top: 4px; color: #0b8a5e; }
         .cf-detail { font-size: 13px; color: #94a3b8; margin-top: 3px; }
-        
         .payment-detail-item { display: grid; grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 0.4fr 0.3fr; gap: 6px; padding: 8px 6px; border-bottom: 1px solid #e9edf2; font-size: 14px; align-items: center; }
         .payment-detail-item.header { font-weight: 600; color: #475569; border-bottom: 2px solid #d1d9e6; background: #f8fafc; font-size: 14px; }
-        
         .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .chart-container { max-height: 200px; overflow-y: auto; }
         .chart-item { margin-bottom: 8px; }
         .chart-item .label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
         .chart-item .bar { height: 8px; background: #e9edf2; border-radius: 6px; overflow: hidden; margin-top: 2px; }
         .chart-item .bar .fill { height: 100%; border-radius: 6px; }
-        
         .payment-tree .tree-node .node-content .name { font-size: 15px; }
         .payment-tree .tree-node .node-content .badge { font-size: 13px; }
         .payment-tree .tree-node .node-content .badge .num { font-size: 15px; }
-        
         .role-badge { font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 8px; }
         .role-badge.admin { background: #dbeafe; color: #1d4ed8; }
         .role-badge.viewer { background: #f1f5f9; color: #64748b; }
         .role-badge.invited { background: #fef3c7; color: #d97706; }
-        
         .login-box { max-width: 420px; margin: 40px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
         .login-box h1 { text-align: center; font-size: 28px; margin-bottom: 8px; }
         .login-box .subtitle { text-align: center; color: #64748b; margin-bottom: 28px; font-size: 14px; }
@@ -104,26 +92,21 @@
         .login-error { color: #b91c1c; font-size: 14px; text-align: center; margin-top: 12px; display: none; }
         .login-box .role-info { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 10px; }
         .login-box .role-info strong { color: #1e293b; }
-        
         .logout-btn { background: #b91c1c; color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
         .logout-btn:hover { background: #991b1b; }
-        
         .sync-badge { background: #f1f5f9; padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #64748b; }
         .sync-badge.synced { background: #d1fae5; color: #0b8a5e; }
         .sync-badge.error { background: #fee2e2; color: #b91c1c; }
         .sync-badge.loading { background: #fef3c7; color: #d97706; }
-        
         .setup-warning { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
         .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
         .setup-warning code { background: white; padding: 2px 8px; border-radius: 4px; font-size: 13px; }
-        
         .invite-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #e9edf2; flex-wrap: wrap; gap: 6px; }
         .invite-list-item .phone { font-weight: 600; }
         .invite-list-item .status { font-size: 13px; }
         .invite-list-item .status.active { color: #0b8a5e; }
         .invite-list-item .status.inactive { color: #94a3b8; }
         .invite-link { color: #7c3aed; font-family: monospace; font-size: 13px; word-break: break-all; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; }
-        
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .analytics-grid { grid-template-columns: 1fr; } .cashflow-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } .login-box { padding: 24px; } }
     </style>
@@ -142,12 +125,14 @@
             <option value="viewer">👁️ Руководитель (по ссылке)</option>
         </select>
         
+        <!-- Поля для руководителя (скрыты по умолчанию) -->
         <div id="viewerLoginFields" style="display:none;">
             <label for="viewerInviteLink">🔗 Вставьте ссылку-приглашение</label>
             <input type="text" id="viewerInviteLink" placeholder="https://...?invite=ABC123XYZ789" onkeydown="if(event.key==='Enter') attemptLogin()">
             <div style="font-size:13px; color:#94a3b8; margin-top:-10px; margin-bottom:10px;">ℹ️ Ссылку вы получили от администратора</div>
         </div>
         
+        <!-- Поля для администратора (видны по умолчанию) -->
         <div id="adminLoginFields">
             <label for="loginPassword">🔑 Пароль администратора</label>
             <input type="password" id="loginPassword" placeholder="Введите пароль" onkeydown="if(event.key==='Enter') attemptLogin()">
@@ -330,6 +315,13 @@
 let GIST_ID = localStorage.getItem('gistId') || '';
 let GIST_TOKEN = localStorage.getItem('gistToken') || '';
 
+// Показываем/скрываем поля входа при смене роли
+document.getElementById('loginRole').addEventListener('change', function() {
+    const isViewer = this.value === 'viewer';
+    document.getElementById('viewerLoginFields').style.display = isViewer ? 'block' : 'none';
+    document.getElementById('adminLoginFields').style.display = isViewer ? 'none' : 'block';
+});
+
 function saveGistSettings() {
     const id = document.getElementById('gistIdInput').value.trim();
     const token = document.getElementById('gistTokenInput').value.trim();
@@ -411,11 +403,9 @@ async function syncFromGist(silent = false) {
         
         const content = JSON.parse(files['smeta-data.json'].content);
         
-        // Обновляем локальные данные
         if (content.objects) data.objects = content.objects;
         if (content.payments) data.payments = content.payments;
         if (content.invites) {
-            // Сохраняем приглашения в data и в localStorage для обратной совместимости
             data.invites = content.invites;
             localStorage.setItem('dashInvites', JSON.stringify(content.invites));
         }
@@ -451,7 +441,6 @@ async function pushToGist() {
     updateSyncStatus('🔄 Сохранение...', 'loading');
     
     try {
-        // Получаем приглашения из data или localStorage
         let invites = data.invites || JSON.parse(localStorage.getItem('dashInvites') || '[]');
         const adminPass = localStorage.getItem('dashAdminPass') || '';
         
@@ -484,7 +473,6 @@ async function pushToGist() {
             throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }
         
-        // После успешного сохранения обновляем data.invites
         data.invites = invites;
         saveData();
         
@@ -505,11 +493,9 @@ async function pushToGist() {
 // ============================================================
 
 function getInvites() {
-    // Сначала пробуем получить из data (основной источник)
     if (data && data.invites) {
         return data.invites;
     }
-    // Если нет — из localStorage (для обратной совместимости)
     let saved = localStorage.getItem('dashInvites');
     if (saved) {
         try { return JSON.parse(saved); } catch(e) {}
@@ -518,15 +504,11 @@ function getInvites() {
 }
 
 function saveInvites(invites) {
-    // Сохраняем в data
     if (data) {
         data.invites = invites;
         saveData();
     }
-    // Сохраняем в localStorage для обратной совместимости
     localStorage.setItem('dashInvites', JSON.stringify(invites));
-    
-    // Автоматически отправляем в облако
     if (GIST_ID && GIST_TOKEN) {
         pushToGist();
     }
@@ -552,20 +534,13 @@ function checkViewerLink(link) {
         const url = new URL(link);
         code = url.searchParams.get('invite');
     } catch(e) {
-        // Если ссылка невалидна, пробуем использовать как есть
-        if (link && link.length > 0) {
-            // Пробуем извлечь код из строки
-            const match = link.match(/[?&]invite=([^&]+)/);
-            if (match) code = match[1];
-            else if (link.length === 12) code = link;
-        }
+        const match = link.match(/[?&]invite=([^&]+)/);
+        if (match) code = match[1];
+        else if (link.length === 12) code = link;
     }
-    
     if (!code) return null;
-    
     const invites = getInvites();
-    const invite = invites.find(i => i.code === code && i.active === true);
-    return invite || null;
+    return invites.find(i => i.code === code && i.active === true) || null;
 }
 
 function generateInviteCode() {
@@ -695,7 +670,7 @@ function updateButtonsByRole() {
 })();
 
 // ============================================================
-// УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ (С КНОПКОЙ УДАЛЕНИЯ)
+// УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
 // ============================================================
 
 function openInviteModal() {
@@ -793,7 +768,7 @@ function renderInvites() {
                 <span class="status ${statusClass}">${statusText}</span>
                 ${inv.active ? `<button class="btn btn-sm btn-danger" onclick="revokeInvite(${inv.id})">🚫 Отозвать</button>` : 
                               `<button class="btn btn-sm btn-success" onclick="restoreInvite(${inv.id})">↩️ Восстановить</button>`}
-                <button class="btn btn-sm btn-danger" onclick="deleteInvite(${inv.id})" style="background:#991b1b;">🗑️ Удалить</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteInvite(${inv.id})">🗑️ Удалить</button>
                 <button class="btn btn-sm btn-outline" onclick="copyInviteLinkById(${inv.id})">📋 Ссылка</button>
             </div>
         </div>`;
@@ -862,7 +837,6 @@ function loadData() {
         const saved = localStorage.getItem('dashData');
         if (saved) {
             const parsed = JSON.parse(saved);
-            // Убедимся, что есть поле invites
             if (!parsed.invites) parsed.invites = [];
             return parsed;
         }
@@ -873,7 +847,6 @@ function loadData() {
 function saveData() {
     try {
         localStorage.setItem('dashData', JSON.stringify(data));
-        // Автоматически отправляем в облако
         if (GIST_ID && GIST_TOKEN) {
             pushToGist();
         }
