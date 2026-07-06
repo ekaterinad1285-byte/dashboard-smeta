@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сметы и КС | Дашборд</title>
+    <title>Сметы и КС | Облачный дашборд</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #f1f5f9; color: #1e293b; padding: 16px; }
@@ -32,6 +32,8 @@
         .btn-sm { padding: 2px 10px; font-size: 12px; }
         .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-purple { background: #7c3aed; color: white; }
+        .btn-purple:hover { background: #6d28d9; }
         
         .tree { margin-top: 6px; font-size: 15px; }
         .tree-node { margin-left: 0; }
@@ -83,8 +85,6 @@
         .chart-item .label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
         .chart-item .bar { height: 8px; background: #e9edf2; border-radius: 6px; overflow: hidden; margin-top: 2px; }
         .chart-item .bar .fill { height: 100%; border-radius: 6px; }
-        .progress-mini { height: 6px; background: #e9edf2; border-radius: 4px; overflow: hidden; width: 70px; }
-        .progress-mini .fill { height: 100%; border-radius: 4px; }
         
         .payment-tree .tree-node .node-content .name { font-size: 15px; }
         .payment-tree .tree-node .node-content .badge { font-size: 13px; }
@@ -93,6 +93,7 @@
         .role-badge { font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 8px; }
         .role-badge.admin { background: #dbeafe; color: #1d4ed8; }
         .role-badge.viewer { background: #f1f5f9; color: #64748b; }
+        .role-badge.invited { background: #fef3c7; color: #d97706; }
         
         /* Login Screen */
         #loginScreen {
@@ -186,6 +187,56 @@
         }
         .logout-btn:hover { background: #991b1b; }
         
+        .sync-badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .sync-badge.synced { background: #d1fae5; color: #0b8a5e; }
+        .sync-badge.error { background: #fee2e2; color: #b91c1c; }
+        .sync-badge.loading { background: #fef3c7; color: #d97706; }
+        
+        .invite-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .invite-list-item .phone { font-weight: 600; }
+        .invite-list-item .status { font-size: 13px; }
+        .invite-list-item .status.active { color: #0b8a5e; }
+        .invite-list-item .status.inactive { color: #94a3b8; }
+        
+        .invite-link {
+            color: #7c3aed;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .setup-warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
+        .setup-warning code {
+            background: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .analytics-grid { grid-template-columns: 1fr; } .cashflow-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } .login-box { padding: 24px; } }
     </style>
@@ -196,24 +247,35 @@
 <div id="loginScreen">
     <div class="login-box">
         <h1>📊 Сметы и КС</h1>
-        <div class="subtitle">Вход в систему управления проектами</div>
+        <div class="subtitle">Облачная система управления проектами</div>
         
         <label for="loginRole">👤 Роль</label>
         <select id="loginRole">
             <option value="admin">👑 Администратор</option>
-            <option value="viewer">👁️ Руководитель</option>
+            <option value="viewer">👁️ Руководитель (по ссылке)</option>
         </select>
         
-        <label for="loginPassword">🔑 Пароль</label>
-        <input type="password" id="loginPassword" placeholder="Введите пароль" onkeydown="if(event.key==='Enter') attemptLogin()">
+        <div id="viewerLoginFields" style="display:none;">
+            <label for="viewerInviteLink">🔗 Вставьте ссылку-приглашение</label>
+            <input type="text" id="viewerInviteLink" placeholder="https://...?invite=ABC123XYZ789" onkeydown="if(event.key==='Enter') attemptLogin()">
+            <div style="font-size:13px; color:#94a3b8; margin-top:-10px; margin-bottom:10px;">
+                ℹ️ Ссылку вы получили от администратора
+            </div>
+        </div>
+        
+        <div id="adminLoginFields">
+            <label for="loginPassword">🔑 Пароль администратора</label>
+            <input type="password" id="loginPassword" placeholder="Введите пароль" onkeydown="if(event.key==='Enter') attemptLogin()">
+        </div>
         
         <button class="btn-login" onclick="attemptLogin()">Войти</button>
         
-        <div class="login-error" id="loginError">❌ Неверный пароль. Попробуйте снова.</div>
+        <div class="login-error" id="loginError">❌ Неверные данные. Попробуйте снова.</div>
         
         <div class="role-info">
             <strong>👑 Администратор:</strong> полный доступ<br>
-            <strong>👁️ Руководитель:</strong> только просмотр
+            <strong>👁️ Руководитель:</strong> вход по ссылке-приглашению<br>
+            <span style="font-size:12px; color:#94a3b8;">☁️ Данные синхронизируются через GitHub</span>
         </div>
     </div>
 </div>
@@ -221,16 +283,46 @@
 <!-- ОСНОВНОЙ ДАШБОРД -->
 <div id="mainApp" style="display:none;">
     <div class="container">
-        <!-- Шапка с ролями -->
+        <!-- Шапка -->
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; background:white; padding:12px 18px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                 <span style="font-weight:700; font-size:18px;">📊 Сметы и КС</span>
                 <span id="currentRoleBadge" class="role-badge admin">👑 Админ</span>
+                <span class="sync-badge" id="syncStatus">☁️ Синхронизация...</span>
             </div>
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-outline" onclick="syncFromGist()" id="syncBtn">🔄 Синхронизировать</button>
                 <span style="font-size:14px; color:#64748b;" id="userInfo"></span>
                 <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
             </div>
+        </div>
+
+        <!-- Настройка Gist (показывается только если не настроен) -->
+        <div class="setup-warning" id="setupWarning" style="display:none;">
+            <h3>⚙️ Настройте синхронизацию с GitHub</h3>
+            <p style="margin-bottom:8px;">Для облачной синхронизации укажите ID вашего Gist и токен:</p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <label style="font-weight:500; font-size:14px;">Gist ID:</label>
+                <input id="gistIdInput" placeholder="abcdef1234567890" style="padding:6px 12px; border:1px solid #d1d9e6; border-radius:8px; min-width:150px;">
+                <label style="font-weight:500; font-size:14px;">Токен:</label>
+                <input id="gistTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxx" style="padding:6px 12px; border:1px solid #d1d9e6; border-radius:8px; min-width:200px;">
+                <button class="btn btn-primary btn-sm" onclick="saveGistSettings()">💾 Сохранить</button>
+            </div>
+            <p style="margin-top:8px; font-size:13px; color:#92400e;">
+                📖 <a href="#" onclick="showGistInstructions(); return false;" style="color:#d97706;">Как создать Gist и токен?</a>
+            </p>
+        </div>
+
+        <!-- Панель управления доступом (только для админа) -->
+        <div class="card" id="accessPanel" style="display:none;">
+            <div class="card-header">
+                <span class="card-title">🔐 Управление доступом руководителей</span>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" onclick="openInviteModal()">➕ Создать приглашение</button>
+                </div>
+            </div>
+            <div id="inviteList"></div>
+            <div id="inviteMessage" style="color:#94a3b8; text-align:center; padding:10px; font-size:14px;">Нет активных приглашений</div>
         </div>
 
         <!-- KPI -->
@@ -272,7 +364,7 @@
             <div class="cashflow-grid" id="cashflowGrid"></div>
         </div>
 
-        <!-- Поступления по сметам (дерево) -->
+        <!-- Поступления по сметам -->
         <div class="card">
             <div class="card-header"><span class="card-title">📊 Поступления по сметам</span></div>
             <div class="payment-tree" id="paymentTreeContainer"></div>
@@ -280,7 +372,29 @@
     </div>
 </div>
 
-<!-- Модалки (те же, что были) -->
+<!-- Модалка приглашения -->
+<div class="modal-overlay" id="inviteModal"><div class="modal">
+    <div class="modal-title" id="inviteModalTitle">📨 Создать приглашение</div>
+    <label>👤 Имя руководителя</label>
+    <input id="inviteName" placeholder="Например: Иванов Иван">
+    <label>📱 Номер телефона (для идентификации)</label>
+    <input id="invitePhone" placeholder="+7 900 123-45-67">
+    <label>🔗 Ссылка для входа (сгенерируется)</label>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+        <input id="inviteLinkDisplay" readonly style="flex:1; background:#f1f5f9; font-size:13px; font-family:monospace; padding:8px 12px; border:1px solid #d1d9e6; border-radius:8px;">
+        <button class="btn btn-sm btn-outline" onclick="copyInviteLink()">📋 Копировать</button>
+    </div>
+    <div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:12px; font-size:14px; color:#64748b;">
+        💡 Руководитель перейдёт по ссылке и сразу войдёт без пароля.<br>
+        Ссылка действует, пока вы не отзовёте доступ.
+    </div>
+    <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeInviteModal()">Отмена</button>
+        <button class="btn btn-success" onclick="saveInvite()">✅ Создать</button>
+    </div>
+</div></div>
+
+<!-- Остальные модалки -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal">
     <div class="modal-title" id="modalTitle">Добавить</div>
     <label>Название</label><input id="modalInput">
@@ -325,68 +439,302 @@
 
 <script>
 // ============================================================
-// 0. СИСТЕМА АУТЕНТИФИКАЦИИ
+// 0. КОНФИГУРАЦИЯ GITHUB GIST
 // ============================================================
 
-// Пароли (хранятся в зашифрованном виде в localStorage)
-// По умолчанию: admin = "admin123", viewer = "viewer123"
-function getPasswords() {
-    let saved = localStorage.getItem('dashPasswords');
+let GIST_ID = localStorage.getItem('gistId') || '';
+let GIST_TOKEN = localStorage.getItem('gistToken') || '';
+
+function saveGistSettings() {
+    const id = document.getElementById('gistIdInput').value.trim();
+    const token = document.getElementById('gistTokenInput').value.trim();
+    if (!id || !token) {
+        alert('Введите Gist ID и токен');
+        return;
+    }
+    GIST_ID = id;
+    GIST_TOKEN = token;
+    localStorage.setItem('gistId', id);
+    localStorage.setItem('gistToken', token);
+    document.getElementById('setupWarning').style.display = 'none';
+    updateSyncStatus('🔄 Проверка подключения...', 'loading');
+    syncFromGist(true);
+}
+
+function loadGistSettings() {
+    if (GIST_ID && GIST_TOKEN) {
+        document.getElementById('setupWarning').style.display = 'none';
+        return true;
+    }
+    document.getElementById('setupWarning').style.display = 'block';
+    document.getElementById('gistIdInput').value = GIST_ID;
+    document.getElementById('gistTokenInput').value = GIST_TOKEN;
+    return false;
+}
+
+function showGistInstructions() {
+    alert(
+        '📖 Как настроить синхронизацию:\n\n' +
+        '1. Создайте Gist на gist.github.com\n' +
+        '   - Название: smeta-data.json\n' +
+        '   - Содержимое: {"objects":[],"payments":[],"invites":[]}\n\n' +
+        '2. Скопируйте ID из URL (последняя часть)\n' +
+        '   Например: https://gist.github.com/ваш-логин/abcdef1234567890\n\n' +
+        '3. Создайте токен:\n' +
+        '   - GitHub Settings → Developer settings → Personal access tokens\n' +
+        '   - Выберите права: gist\n\n' +
+        '4. Вставьте ID и токен в поля выше\n\n' +
+        '✅ После сохранения данные будут синхронизироваться!'
+    );
+}
+
+// ============================================================
+// 0.1 СИНХРОНИЗАЦИЯ С GIST
+// ============================================================
+
+function updateSyncStatus(text, type = '') {
+    const el = document.getElementById('syncStatus');
+    el.textContent = text;
+    el.className = 'sync-badge ' + (type || '');
+}
+
+async function syncFromGist(silent = false) {
+    if (!GIST_ID || !GIST_TOKEN) {
+        if (!silent) {
+            document.getElementById('setupWarning').style.display = 'block';
+            alert('⚠️ Сначала настройте синхронизацию (введите Gist ID и токен)');
+        }
+        return;
+    }
+    
+    if (!silent) updateSyncStatus('🔄 Загрузка...', 'loading');
+    
+    try {
+        // Сначала загружаем данные из Gist
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: {
+                'Authorization': `token ${GIST_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+        }
+        
+        const gist = await response.json();
+        const files = gist.files;
+        
+        if (!files || !files['smeta-data.json']) {
+            throw new Error('Файл smeta-data.json не найден в Gist');
+        }
+        
+        const content = JSON.parse(files['smeta-data.json'].content);
+        
+        // Обновляем локальные данные
+        if (content.objects) data.objects = content.objects;
+        if (content.payments) data.payments = content.payments;
+        if (content.invites) {
+            // Сохраняем приглашения отдельно
+            localStorage.setItem('dashInvites', JSON.stringify(content.invites));
+        }
+        if (content.adminPass) {
+            localStorage.setItem('dashAdminPass', content.adminPass);
+        }
+        
+        saveData();
+        
+        if (!silent) {
+            updateSyncStatus('✅ Синхронизировано!', 'synced');
+            setTimeout(() => updateSyncStatus('☁️ Данные в облаке', ''), 3000);
+        }
+        
+        render();
+        if (isAdmin()) renderInvites();
+        
+    } catch (error) {
+        console.error('Sync error:', error);
+        updateSyncStatus('❌ Ошибка: ' + error.message, 'error');
+        if (!silent) {
+            alert('Ошибка синхронизации: ' + error.message);
+        }
+    }
+}
+
+async function pushToGist() {
+    if (!GIST_ID || !GIST_TOKEN) {
+        alert('⚠️ Сначала настройте синхронизацию');
+        return false;
+    }
+    
+    updateSyncStatus('🔄 Сохранение...', 'loading');
+    
+    try {
+        const invites = JSON.parse(localStorage.getItem('dashInvites') || '[]');
+        const adminPass = localStorage.getItem('dashAdminPass') || '';
+        
+        const fullData = {
+            objects: data.objects,
+            payments: data.payments,
+            invites: invites,
+            adminPass: adminPass,
+            version: '3.0',
+            updatedAt: new Date().toISOString()
+        };
+        
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${GIST_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    'smeta-data.json': {
+                        content: JSON.stringify(fullData, null, 2)
+                    }
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+        }
+        
+        updateSyncStatus('✅ Сохранено в облако!', 'synced');
+        setTimeout(() => updateSyncStatus('☁️ Данные в облаке', ''), 3000);
+        return true;
+        
+    } catch (error) {
+        console.error('Push error:', error);
+        updateSyncStatus('❌ Ошибка: ' + error.message, 'error');
+        alert('Ошибка сохранения: ' + error.message);
+        return false;
+    }
+}
+
+// Автоматическая синхронизация при загрузке
+setTimeout(() => {
+    if (GIST_ID && GIST_TOKEN) {
+        syncFromGist(true);
+    }
+}, 500);
+
+// ============================================================
+// 0.2 СИСТЕМА ПРИГЛАШЕНИЙ
+// ============================================================
+
+function getInvites() {
+    let saved = localStorage.getItem('dashInvites');
     if (saved) {
         try { return JSON.parse(saved); } catch(e) {}
     }
-    // Устанавливаем пароли по умолчанию
-    const defaultPass = {
-        admin: btoa('admin123'),
-        viewer: btoa('viewer123')
-    };
-    localStorage.setItem('dashPasswords', JSON.stringify(defaultPass));
-    return defaultPass;
+    return [];
 }
 
-function setPassword(role, newPass) {
-    let pass = getPasswords();
-    pass[role] = btoa(newPass);
-    localStorage.setItem('dashPasswords', JSON.stringify(pass));
-}
-
-function checkPassword(role, inputPass) {
-    let pass = getPasswords();
-    return pass[role] === btoa(inputPass);
-}
-
-let currentUser = { role: null, name: null };
-
-function attemptLogin() {
-    const role = document.getElementById('loginRole').value;
-    const password = document.getElementById('loginPassword').value;
-    const errorEl = document.getElementById('loginError');
-    
-    if (checkPassword(role, password)) {
-        currentUser.role = role;
-        currentUser.name = role === 'admin' ? 'Администратор' : 'Руководитель';
-        errorEl.style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        
-        // Обновляем интерфейс
-        updateUIForRole();
-        render();
-        // Сохраняем сессию
-        localStorage.setItem('dashSession', JSON.stringify({ role: role, name: currentUser.name }));
-    } else {
-        errorEl.style.display = 'block';
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('loginPassword').focus();
+function saveInvites(invites) {
+    localStorage.setItem('dashInvites', JSON.stringify(invites));
+    // Автоматически отправляем в облако
+    if (GIST_ID && GIST_TOKEN) {
+        pushToGist();
     }
 }
 
+function getAdminPassword() {
+    let saved = localStorage.getItem('dashAdminPass');
+    if (saved) {
+        try { return saved; } catch(e) {}
+    }
+    const defaultPass = btoa('admin123');
+    localStorage.setItem('dashAdminPass', defaultPass);
+    return defaultPass;
+}
+
+function checkAdminPassword(inputPass) {
+    return getAdminPassword() === btoa(inputPass);
+}
+
+function checkViewerLink(link) {
+    let code = null;
+    try {
+        const url = new URL(link);
+        code = url.searchParams.get('invite');
+    } catch(e) {
+        if (link.length === 12) code = link;
+    }
+    if (!code) return null;
+    const invites = getInvites();
+    return invites.find(i => i.code === code && i.active === true) || null;
+}
+
+function generateInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 12; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+let currentUser = { role: null, name: null, phone: null };
+
+function attemptLogin() {
+    const role = document.getElementById('loginRole').value;
+    const errorEl = document.getElementById('loginError');
+    
+    if (role === 'admin') {
+        const password = document.getElementById('loginPassword').value;
+        if (checkAdminPassword(password)) {
+            currentUser = { role: 'admin', name: 'Администратор', phone: null };
+            loginSuccess();
+        } else {
+            errorEl.style.display = 'block';
+            document.getElementById('loginPassword').value = '';
+        }
+    } else {
+        const link = document.getElementById('viewerInviteLink').value.trim();
+        const invite = checkViewerLink(link);
+        if (invite) {
+            currentUser = { role: 'viewer', name: invite.name, phone: invite.phone };
+            loginSuccess();
+        } else {
+            errorEl.style.display = 'block';
+            document.getElementById('viewerInviteLink').value = '';
+        }
+    }
+}
+
+function loginSuccess() {
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    
+    loadGistSettings();
+    
+    if (currentUser.role === 'admin') {
+        document.getElementById('accessPanel').style.display = 'block';
+        renderInvites();
+    } else {
+        document.getElementById('accessPanel').style.display = 'none';
+    }
+    
+    updateUIForRole();
+    render();
+    localStorage.setItem('dashSession', JSON.stringify({ 
+        role: currentUser.role, 
+        name: currentUser.name,
+        phone: currentUser.phone 
+    }));
+}
+
 function logout() {
-    currentUser = { role: null, name: null };
+    currentUser = { role: null, name: null, phone: null };
     localStorage.removeItem('dashSession');
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('loginPassword').value = '';
+    document.getElementById('viewerInviteLink').value = '';
     document.getElementById('loginError').style.display = 'none';
 }
 
@@ -398,30 +746,24 @@ function updateUIForRole() {
     if (isAdmin) {
         badge.textContent = '👑 Админ';
         badge.className = 'role-badge admin';
-        userInfo.textContent = '👤 Полный доступ';
+        userInfo.textContent = '👤 ' + currentUser.name;
     } else {
-        badge.textContent = '👁️ Просмотр';
-        badge.className = 'role-badge viewer';
-        userInfo.textContent = '👤 Только просмотр';
+        badge.textContent = '👁️ ' + (currentUser.name || 'Руководитель');
+        badge.className = 'role-badge invited';
+        userInfo.textContent = '📱 ' + (currentUser.phone || '');
     }
-    
-    // Блокируем/разблокируем кнопки
     updateButtonsByRole();
 }
 
-function isAdmin() {
-    return currentUser.role === 'admin';
-}
+function isAdmin() { return currentUser.role === 'admin'; }
 
 function updateButtonsByRole() {
     const admin = isAdmin();
-    // Все кнопки действий
     document.querySelectorAll('.card .btn-primary, .card .btn-success, .card .btn-warning, .card .btn-danger, #addPaymentBtn, #treeActions .btn').forEach(btn => {
         btn.disabled = !admin;
         btn.style.opacity = admin ? '1' : '0.5';
         btn.style.cursor = admin ? 'pointer' : 'not-allowed';
     });
-    // Кнопки в node-actions
     document.querySelectorAll('.node-actions .btn').forEach(btn => {
         btn.disabled = !admin;
         btn.style.opacity = admin ? '1' : '0.5';
@@ -429,7 +771,7 @@ function updateButtonsByRole() {
     });
 }
 
-// Проверка сессии при загрузке
+// Проверка сессии
 (function checkSession() {
     const session = localStorage.getItem('dashSession');
     if (session) {
@@ -438,18 +780,168 @@ function updateButtonsByRole() {
             currentUser = data;
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
+            loadGistSettings();
+            if (currentUser.role === 'admin') {
+                document.getElementById('accessPanel').style.display = 'block';
+                renderInvites();
+            }
             updateUIForRole();
             render();
             return;
         } catch(e) {}
     }
-    // Если сессии нет - показываем экран входа
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'none';
 })();
 
 // ============================================================
-// 1. ДАННЫЕ
+// 0.3 УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
+// ============================================================
+
+function openInviteModal() {
+    if (!isAdmin()) return;
+    const code = generateInviteCode();
+    document.getElementById('inviteName').value = '';
+    document.getElementById('invitePhone').value = '';
+    
+    const baseUrl = window.location.href.split('?')[0];
+    const link = baseUrl + '?invite=' + code;
+    document.getElementById('inviteLinkDisplay').value = link;
+    document.getElementById('inviteLinkDisplay').dataset.code = code;
+    
+    document.getElementById('inviteModalTitle').textContent = '📨 Создать приглашение';
+    document.getElementById('inviteModal').style.display = 'flex';
+}
+
+function closeInviteModal() {
+    document.getElementById('inviteModal').style.display = 'none';
+}
+
+function copyInviteLink() {
+    const link = document.getElementById('inviteLinkDisplay').value;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+            alert('📋 Ссылка скопирована!');
+        }).catch(() => {
+            prompt('Скопируйте ссылку вручную:', link);
+        });
+    } else {
+        prompt('Скопируйте ссылку вручную:', link);
+    }
+}
+
+function saveInvite() {
+    if (!isAdmin()) return;
+    const name = document.getElementById('inviteName').value.trim();
+    const phone = document.getElementById('invitePhone').value.trim();
+    const linkInput = document.getElementById('inviteLinkDisplay');
+    const code = linkInput.dataset.code;
+    const link = linkInput.value;
+    
+    if (!name) { alert('Введите имя руководителя'); return; }
+    if (!phone) { alert('Введите номер телефона'); return; }
+    if (!code) { alert('Ошибка: код не сгенерирован'); return; }
+    
+    const invites = getInvites();
+    if (invites.some(i => i.code === code)) {
+        alert('Такой код уже существует! Обновите страницу.');
+        return;
+    }
+    
+    invites.push({
+        id: Date.now(),
+        name: name,
+        phone: phone,
+        code: code,
+        link: link,
+        active: true,
+        createdAt: new Date().toISOString()
+    });
+    
+    saveInvites(invites);
+    closeInviteModal();
+    renderInvites();
+    
+    alert(`✅ Приглашение создано!\n\n👤 Имя: ${name}\n📱 Телефон: ${phone}\n🔗 Ссылка: ${link}\n\nОтправьте ссылку руководителю.`);
+}
+
+function renderInvites() {
+    const container = document.getElementById('inviteList');
+    const message = document.getElementById('inviteMessage');
+    const invites = getInvites();
+    
+    if (!invites.length) {
+        container.innerHTML = '';
+        message.style.display = 'block';
+        return;
+    }
+    message.style.display = 'none';
+    
+    let html = '';
+    invites.forEach(inv => {
+        const statusClass = inv.active ? 'active' : 'inactive';
+        const statusText = inv.active ? '✅ Активен' : '⛔ Отозван';
+        html += `<div class="invite-list-item">
+            <div style="flex:1; min-width:150px;">
+                <span class="phone">👤 ${inv.name}</span>
+                <span style="color:#64748b; font-size:13px; margin-left:8px;">📱 ${inv.phone}</span>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <span class="invite-link">${inv.link || '—'}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span class="status ${statusClass}">${statusText}</span>
+                ${inv.active ? `<button class="btn btn-sm btn-danger" onclick="revokeInvite(${inv.id})">🚫 Отозвать</button>` : 
+                              `<button class="btn btn-sm btn-success" onclick="restoreInvite(${inv.id})">↩️ Восстановить</button>`}
+                <button class="btn btn-sm btn-outline" onclick="copyInviteLinkById(${inv.id})">📋 Ссылка</button>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function revokeInvite(id) {
+    if (!isAdmin()) return;
+    if (!confirm('Отозвать доступ для этого руководителя?')) return;
+    const invites = getInvites();
+    const inv = invites.find(i => i.id === id);
+    if (inv) {
+        inv.active = false;
+        saveInvites(invites);
+        renderInvites();
+        alert(`✅ Доступ для ${inv.name} отозван.`);
+    }
+}
+
+function restoreInvite(id) {
+    if (!isAdmin()) return;
+    const invites = getInvites();
+    const inv = invites.find(i => i.id === id);
+    if (inv) {
+        inv.active = true;
+        saveInvites(invites);
+        renderInvites();
+        alert(`✅ Доступ для ${inv.name} восстановлен.`);
+    }
+}
+
+function copyInviteLinkById(id) {
+    const invites = getInvites();
+    const inv = invites.find(i => i.id === id);
+    if (!inv || !inv.link) return;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(inv.link).then(() => {
+            alert('📋 Ссылка скопирована!');
+        }).catch(() => {
+            prompt('Скопируйте ссылку вручную:', inv.link);
+        });
+    } else {
+        prompt('Скопируйте ссылку вручную:', inv.link);
+    }
+}
+
+// ============================================================
+// 2. ДАННЫЕ
 // ============================================================
 function loadData() {
     try {
@@ -464,6 +956,10 @@ function loadData() {
 function saveData() {
     try {
         localStorage.setItem('dashData', JSON.stringify(data));
+        // Автоматически отправляем в облако
+        if (GIST_ID && GIST_TOKEN) {
+            pushToGist();
+        }
     } catch(e) {
         console.warn('Не удалось сохранить данные:', e);
     }
@@ -510,7 +1006,7 @@ function generateId(type) {
 }
 
 // ============================================================
-// 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// 3. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ============================================================
 function fmt(v) { return (v || 0).toLocaleString('ru-RU') + ' ₽'; }
 function pct(v) { return (v || 0).toFixed(0) + '%'; }
@@ -556,7 +1052,7 @@ function getTotalPaymentsForObject(objId) {
 }
 
 // ============================================================
-// 3. ПЕРЕСЧЁТ
+// 4. ПЕРЕСЧЁТ И РЕНДЕРИНГ
 // ============================================================
 function recalcAll() {
     data.objects.forEach(obj => {
@@ -580,13 +1076,9 @@ function recalcAll() {
     saveData();
 }
 
-// ============================================================
-// 4. РЕНДЕРИНГ (основные функции — те же, что были)
-// ============================================================
 function render() {
     recalcAll();
     
-    // Дерево объектов
     let html = '';
     data.objects.forEach(obj => {
         const objPayments = getTotalPaymentsForObject(obj.id);
@@ -692,7 +1184,7 @@ function renderAnalytics() {
 }
 
 // ============================================================
-// 6. МОДАЛКИ (все с проверкой роли)
+// 6. ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ (с проверками роли)
 // ============================================================
 let ctx = { type: '', objId: null, estId: null };
 
@@ -748,9 +1240,9 @@ function modalSave() {
     render();
 }
 
-// ============================================================
-// 7. ИМПОРТ, РАБОТЫ, КС, ПОСТУПЛЕНИЯ (все с проверкой роли)
-// ============================================================
+// Импорт
+let impCtx = { type: '', target: null };
+
 function openImportModal(type, target) {
     if (!isAdmin()) return alert('⚠️ Только администратор может импортировать данные');
     impCtx = { type, target };
@@ -763,8 +1255,6 @@ function openImportModal(type, target) {
     document.getElementById('importData').value = '';
     ov.style.display = 'flex';
 }
-
-let impCtx = { type: '', target: null };
 
 function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
 
@@ -814,9 +1304,7 @@ function importFromGoogle() {
     alert('✅ Импортировано ' + works.length + ' позиций');
 }
 
-// ============================================================
-// 8. РАБОТЫ, КС, ПОСТУПЛЕНИЯ (сокращенные версии с проверками)
-// ============================================================
+// Работы
 function openWorks(id) {
     let e = getEstimate(id);
     if (!e) return;
@@ -845,13 +1333,12 @@ function openWorks(id) {
 }
 
 function closeWorksModal() { document.getElementById('worksModal').style.display = 'none'; render(); }
-
 function addW(id) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; if (!e.works) e.works = []; e.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0 }); openWorks(id); render(); }
 function delW(id, i) { if (!isAdmin()) return; if (!confirm('Удалить позицию?')) return; let e = getEstimate(id); if (!e) return; e.works.splice(i, 1); openWorks(id); render(); }
 function updW(id, inp) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; let i = parseInt(inp.dataset.i); let f = inp.dataset.f; let v = inp.value; if (f === 'qty' || f === 'price') v = parseFloat(v) || 0; if (!e.works[i]) return; e.works[i][f] = v; let cst = (e.works[i].qty || 0) * (e.works[i].price || 0); let sp = document.getElementById('wc-' + id + '-' + i); if (sp) sp.textContent = fmt(cst); saveData(); render(); }
 
-function openKs(id) { /* полная версия с проверками */ 
-    if (!isAdmin() && !confirm('В режиме просмотра нельзя редактировать. Продолжить?')) return;
+// КС
+function openKs(id) {
     let ks = getKs(id);
     if (!ks) { alert('КС не найдена!'); return; }
     let parentEst = null;
@@ -909,9 +1396,7 @@ function delObj(id) { if (!isAdmin()) return; if (!confirm('Удалить об�
 function delEst(oid, eid) { if (!isAdmin()) return; if (!confirm('Удалить смету?')) return; let o = getObject(oid); if (!o) return; o.estimates = o.estimates.filter(e => e.id !== eid); saveData(); render(); }
 function delKs(eid, kid) { if (!isAdmin()) return; if (!confirm('Удалить КС?')) return; let e = getEstimate(eid); if (!e) return; if (e.ksList) e.ksList = e.ksList.filter(k => k.id !== kid); saveData(); render(); }
 
-// ============================================================
-// 9. ПОСТУПЛЕНИЯ
-// ============================================================
+// Поступления
 function openPaymentModal(editId) {
     if (!isAdmin()) return alert('⚠️ Только администратор может управлять поступлениями');
     let sel = document.getElementById('paymentEstimate');
@@ -1044,9 +1529,7 @@ function openPaymentDetail(m) {
 
 function closePaymentDetailModal() { document.getElementById('paymentDetailModal').style.display = 'none'; }
 
-// ============================================================
-// 10. ДЕРЕВО ПОСТУПЛЕНИЙ
-// ============================================================
+// Дерево поступлений
 function renderPaymentTree() {
     let c = document.getElementById('paymentTreeContainer');
     let h = '';
@@ -1128,11 +1611,51 @@ window.toggle = toggle;
 window.toggleP = toggleP;
 window.attemptLogin = attemptLogin;
 window.logout = logout;
+window.syncFromGist = syncFromGist;
+window.saveGistSettings = saveGistSettings;
+window.showGistInstructions = showGistInstructions;
+window.openInviteModal = openInviteModal;
+window.closeInviteModal = closeInviteModal;
+window.saveInvite = saveInvite;
+window.revokeInvite = revokeInvite;
+window.restoreInvite = restoreInvite;
+window.copyInviteLink = copyInviteLink;
+window.copyInviteLinkById = copyInviteLinkById;
 
-// Если сессия уже есть — рендерим
 if (currentUser.role) {
     render();
+    if (isAdmin()) renderInvites();
 }
+
+// ============================================================
+// ПРОВЕРКА ПАРАМЕТРОВ URL ДЛЯ АВТОВХОДА РУКОВОДИТЕЛЯ
+// ============================================================
+(function checkUrlForInvite() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('invite');
+    if (code) {
+        const invites = getInvites();
+        const invite = invites.find(i => i.code === code && i.active === true);
+        if (invite) {
+            currentUser = { role: 'viewer', name: invite.name, phone: invite.phone };
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadGistSettings();
+            if (currentUser.role === 'admin') {
+                document.getElementById('accessPanel').style.display = 'block';
+                renderInvites();
+            }
+            updateUIForRole();
+            render();
+            localStorage.setItem('dashSession', JSON.stringify({ 
+                role: currentUser.role, 
+                name: currentUser.name,
+                phone: currentUser.phone 
+            }));
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+})();
 </script>
 </body>
 </html>
