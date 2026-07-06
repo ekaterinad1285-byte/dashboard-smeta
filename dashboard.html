@@ -95,15 +95,6 @@
         .role-badge.viewer { background: #f1f5f9; color: #64748b; }
         .role-badge.invited { background: #fef3c7; color: #d97706; }
         
-        /* Login Screen */
-        #loginScreen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
         .login-box {
             background: white;
             padding: 40px;
@@ -198,6 +189,21 @@
         .sync-badge.error { background: #fee2e2; color: #b91c1c; }
         .sync-badge.loading { background: #fef3c7; color: #d97706; }
         
+        .setup-warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
+        .setup-warning code {
+            background: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
         .invite-list-item {
             display: flex;
             justify-content: space-between;
@@ -222,21 +228,6 @@
             border-radius: 6px;
         }
         
-        .setup-warning {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-        }
-        .setup-warning h3 { color: #d97706; margin-bottom: 8px; }
-        .setup-warning code {
-            background: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
         @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } .analytics-grid { grid-template-columns: 1fr; } .cashflow-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .cashflow-grid { grid-template-columns: 1fr; } .work-item { grid-template-columns: 1fr 1fr; } .login-box { padding: 24px; } }
     </style>
@@ -244,7 +235,7 @@
 <body>
 
 <!-- ЭКРАН ВХОДА -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:20px;">
     <div class="login-box">
         <h1>📊 Сметы и КС</h1>
         <div class="subtitle">Облачная система управления проектами</div>
@@ -297,7 +288,7 @@
             </div>
         </div>
 
-        <!-- Настройка Gist (показывается только если не настроен) -->
+        <!-- Настройка Gist -->
         <div class="setup-warning" id="setupWarning" style="display:none;">
             <h3>⚙️ Настройте синхронизацию с GitHub</h3>
             <p style="margin-bottom:8px;">Для облачной синхронизации укажите ID вашего Gist и токен:</p>
@@ -372,7 +363,7 @@
     </div>
 </div>
 
-<!-- Модалка приглашения -->
+<!-- Модалки -->
 <div class="modal-overlay" id="inviteModal"><div class="modal">
     <div class="modal-title" id="inviteModalTitle">📨 Создать приглашение</div>
     <label>👤 Имя руководителя</label>
@@ -394,7 +385,6 @@
     </div>
 </div></div>
 
-<!-- Остальные модалки -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal">
     <div class="modal-title" id="modalTitle">Добавить</div>
     <label>Название</label><input id="modalInput">
@@ -439,13 +429,10 @@
 
 <script>
 // ============================================================
-// 0. КОНФИГУРАЦИЯ GITHUB GIST — ВАШ НОВЫЙ ID УЖЕ ВСТАВЛЕН!
+// 0. КОНФИГУРАЦИЯ GITHUB GIST
 // ============================================================
 
-// НОВЫЙ GIST ID (вы создали его 6 июля 2026)
-const DEFAULT_GIST_ID = '01727fa15dd2a05c66707390584c86f5';
-
-let GIST_ID = localStorage.getItem('gistId') || DEFAULT_GIST_ID;
+let GIST_ID = localStorage.getItem('gistId') || '';
 let GIST_TOKEN = localStorage.getItem('gistToken') || '';
 
 function saveGistSettings() {
@@ -465,14 +452,10 @@ function saveGistSettings() {
 }
 
 function loadGistSettings() {
-    // Если есть сохранённые настройки — используем их
-    if (localStorage.getItem('gistId') && localStorage.getItem('gistToken')) {
-        GIST_ID = localStorage.getItem('gistId');
-        GIST_TOKEN = localStorage.getItem('gistToken');
+    if (GIST_ID && GIST_TOKEN) {
         document.getElementById('setupWarning').style.display = 'none';
         return true;
     }
-    // Иначе показываем панель настройки
     document.getElementById('setupWarning').style.display = 'block';
     document.getElementById('gistIdInput').value = GIST_ID;
     document.getElementById('gistTokenInput').value = GIST_TOKEN;
@@ -483,9 +466,8 @@ function showGistInstructions() {
     alert(
         '📖 Как настроить синхронизацию:\n\n' +
         '1. Создайте Gist на gist.github.com\n' +
-        '   - Название: dashboard-data.json\n' +
-        '   - Содержимое: {"objects":[],"payments":[],"invites":[]}\n' +
-        '   - Важно: Публичный Gist!\n\n' +
+        '   - Название: smeta-data.json\n' +
+        '   - Содержимое: {"objects":[],"payments":[],"invites":[]}\n\n' +
         '2. Скопируйте ID из URL (последняя часть)\n' +
         '   Например: https://gist.github.com/ваш-логин/abcdef1234567890\n\n' +
         '3. Создайте токен:\n' +
@@ -502,8 +484,10 @@ function showGistInstructions() {
 
 function updateSyncStatus(text, type = '') {
     const el = document.getElementById('syncStatus');
-    el.textContent = text;
-    el.className = 'sync-badge ' + (type || '');
+    if (el) {
+        el.textContent = text;
+        el.className = 'sync-badge ' + (type || '');
+    }
 }
 
 async function syncFromGist(silent = false) {
@@ -532,15 +516,11 @@ async function syncFromGist(silent = false) {
         const gist = await response.json();
         const files = gist.files;
         
-        // Ищем файл с данными (может быть smeta-data.json или dashboard-data.json)
-        let content = null;
-        if (files['dashboard-data.json']) {
-            content = JSON.parse(files['dashboard-data.json'].content);
-        } else if (files['smeta-data.json']) {
-            content = JSON.parse(files['smeta-data.json'].content);
-        } else {
-            throw new Error('Файл с данными не найден в Gist');
+        if (!files || !files['smeta-data.json']) {
+            throw new Error('Файл smeta-data.json не найден в Gist');
         }
+        
+        const content = JSON.parse(files['smeta-data.json'].content);
         
         if (content.objects) data.objects = content.objects;
         if (content.payments) data.payments = content.payments;
@@ -600,7 +580,7 @@ async function pushToGist() {
             },
             body: JSON.stringify({
                 files: {
-                    'dashboard-data.json': {
+                    'smeta-data.json': {
                         content: JSON.stringify(fullData, null, 2)
                     }
                 }
@@ -623,7 +603,6 @@ async function pushToGist() {
     }
 }
 
-// Автоматическая синхронизация при загрузке
 setTimeout(() => {
     if (GIST_ID && GIST_TOKEN) {
         syncFromGist(true);
@@ -686,13 +665,6 @@ function generateInviteCode() {
 }
 
 let currentUser = { role: null, name: null, phone: null };
-
-// Показываем/скрываем поля входа
-document.getElementById('loginRole').addEventListener('change', function() {
-    const isViewer = this.value === 'viewer';
-    document.getElementById('viewerLoginFields').style.display = isViewer ? 'block' : 'none';
-    document.getElementById('adminLoginFields').style.display = isViewer ? 'none' : 'block';
-});
 
 function attemptLogin() {
     const role = document.getElementById('loginRole').value;
