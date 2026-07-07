@@ -791,7 +791,7 @@
           "id": 104,
           "name": "Внутренние строительно-монтажные и отделочные работы. Смета №25/06",
           "budget": 76200,
-          "done": 20600,
+          "done": 58100,
           "status": "active",
           "works": [
             {
@@ -820,7 +820,7 @@
               "ksNumber": "КС-2-08",
               "advance": 0,
               "budget": 76200,
-              "done": 20600,
+              "done": 58100,
               "status": "active",
               "works": [
                 {
@@ -842,7 +842,7 @@
                   "unit": "шт",
                   "qty": 150,
                   "price": 300,
-                  "done": 0
+                  "done": 125
                 }
               ]
             }
@@ -868,5 +868,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:38:55.485Z"
+  "updatedAt": "2026-07-07T17:38:56.696Z"
 }
