@@ -307,18 +307,18 @@
 
 <script>
 // ============================================================
-// НОВАЯ ВЕРСИЯ: ИСПРАВЛЕНА ОШИБКА 409
+// НОВАЯ ВЕРСИЯ: ИСПРАВЛЕНА ОШИБКА 409 И 400
 // ============================================================
 
 // ============================================================
 // 0. КОНФИГУРАЦИЯ
 // ============================================================
 
-const GIST_FILE_NAME = 'smeta-data.json'; // Имя файла в Gist
+const GIST_FILE_NAME = 'smeta-data.json';
 
 let GIST_ID = localStorage.getItem('gistId') || '';
 let GIST_TOKEN = localStorage.getItem('gistToken') || '';
-let GIST_ETAG = localStorage.getItem('gistEtag') || ''; // Храним версию файла
+let GIST_ETAG = localStorage.getItem('gistEtag') || '';
 
 // ============================================================
 // 1. ПОКАЗ/СКРЫТИЕ ПОЛЕЙ ВХОДА
@@ -380,7 +380,7 @@ function updateSyncStatus(text, type = '') {
 }
 
 // ============================================================
-// 3. СИНХРОНИЗАЦИЯ С GIST (С ОБРАБОТКОЙ 409)
+// 3. СИНХРОНИЗАЦИЯ С GIST (ИСПРАВЛЕННАЯ)
 // ============================================================
 
 async function syncFromGist(silent = false) {
@@ -395,7 +395,6 @@ async function syncFromGist(silent = false) {
     if (!silent) updateSyncStatus('🔄 Загрузка...', 'loading');
     
     try {
-        // Загружаем данные с проверкой ETag
         const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
             headers: {
                 'Authorization': `token ${GIST_TOKEN}`,
@@ -414,7 +413,6 @@ async function syncFromGist(silent = false) {
             throw new Error(`Файл ${GIST_FILE_NAME} не найден в Gist`);
         }
         
-        // Сохраняем ETag для будущих запросов
         const etag = response.headers.get('ETag');
         if (etag) {
             GIST_ETAG = etag;
@@ -423,7 +421,6 @@ async function syncFromGist(silent = false) {
         
         const content = JSON.parse(files[GIST_FILE_NAME].content);
         
-        // Обновляем локальные данные
         if (content.objects) data.objects = content.objects;
         if (content.payments) data.payments = content.payments;
         if (content.invites) {
@@ -453,7 +450,12 @@ async function syncFromGist(silent = false) {
     }
 }
 
+// ============================================================
+// 4. ОСНОВНАЯ ФУНКЦИЯ СОХРАНЕНИЯ (ИСПРАВЛЕНА)
+// ============================================================
+
 async function pushToGist(retryCount = 0) {
+    // Проверяем настройки
     if (!GIST_ID || !GIST_TOKEN) {
         alert('⚠️ Сначала настройте синхронизацию');
         return false;
@@ -462,7 +464,7 @@ async function pushToGist(retryCount = 0) {
     updateSyncStatus('🔄 Сохранение...', 'loading');
     
     try {
-        // Собираем данные для сохранения
+        // Собираем данные
         const invites = data.invites || JSON.parse(localStorage.getItem('dashInvites') || '[]');
         const adminPass = localStorage.getItem('dashAdminPass') || '';
         
@@ -475,18 +477,19 @@ async function pushToGist(retryCount = 0) {
             updatedAt: new Date().toISOString()
         };
         
-        // Формируем запрос с ETag для предотвращения конфликтов
+        // Формируем заголовки
         const headers = {
             'Authorization': `token ${GIST_TOKEN}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         };
         
-        // Если есть ETag — отправляем его для проверки версии
+        // Добавляем ETag, если есть
         if (GIST_ETAG) {
             headers['If-Match'] = GIST_ETAG;
         }
         
+        // Отправляем запрос
         const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
             method: 'PATCH',
             headers: headers,
@@ -499,33 +502,34 @@ async function pushToGist(retryCount = 0) {
             })
         });
         
-        // Если ошибка 409 (конфликт) — делаем повторную попытку с обновлёнными данными
+        // ===== ОБРАБОТКА ОШИБКИ 409 (ИСПРАВЛЕНА) =====
         if (response.status === 409) {
             if (retryCount < 3) {
                 console.warn(`⚠️ Конфликт (409), попытка ${retryCount + 1} из 3...`);
                 updateSyncStatus(`🔄 Конфликт, повтор ${retryCount + 1}/3...`, 'loading');
-                
-                // Сначала обновляем данные из Gist
+                // Загружаем свежие данные из Gist
                 await syncFromGist(true);
-                
                 // Повторяем сохранение
                 return await pushToGist(retryCount + 1);
             } else {
                 throw new Error('Не удалось разрешить конфликт после 3 попыток');
             }
         }
+        // ============================================
         
+        // Другие ошибки
         if (!response.ok) {
             throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }
         
-        // Обновляем ETag после успешного сохранения
+        // Обновляем ETag
         const etag = response.headers.get('ETag');
         if (etag) {
             GIST_ETAG = etag;
             localStorage.setItem('gistEtag', etag);
         }
         
+        // Сохраняем данные локально
         data.invites = invites;
         saveData();
         
@@ -536,8 +540,7 @@ async function pushToGist(retryCount = 0) {
     } catch (error) {
         console.error('Push error:', error);
         updateSyncStatus('❌ Ошибка: ' + error.message, 'error');
-        
-        // Если это не ошибка конфликта — показываем пользователю
+        // Показываем ошибку пользователю только если это не конфликт
         if (!error.message.includes('конфликт')) {
             alert('Ошибка сохранения: ' + error.message);
         }
@@ -546,7 +549,7 @@ async function pushToGist(retryCount = 0) {
 }
 
 // ============================================================
-// 4. СИСТЕМА ПРИГЛАШЕНИЙ
+// 5. СИСТЕМА ПРИГЛАШЕНИЙ
 // ============================================================
 
 function getInvites() {
@@ -727,7 +730,7 @@ function updateButtonsByRole() {
 })();
 
 // ============================================================
-// 5. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
+// 6. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
 // ============================================================
 
 function openInviteModal() {
@@ -887,7 +890,7 @@ function copyInviteLinkById(id) {
 }
 
 // ============================================================
-// 6. ДАННЫЕ
+// 7. ДАННЫЕ
 // ============================================================
 function loadData() {
     try {
@@ -955,7 +958,7 @@ function generateId(type) {
 }
 
 // ============================================================
-// 7. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// 8. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ============================================================
 function fmt(v) { return (v || 0).toLocaleString('ru-RU') + ' ₽'; }
 function pct(v) { return (v || 0).toFixed(0) + '%'; }
@@ -1001,7 +1004,7 @@ function getTotalPaymentsForObject(objId) {
 }
 
 // ============================================================
-// 8. ПЕРЕСЧЁТ И РЕНДЕРИНГ
+// 9. ПЕРЕСЧЁТ И РЕНДЕРИНГ
 // ============================================================
 function recalcAll() {
     data.objects.forEach(obj => {
@@ -1092,7 +1095,7 @@ function toggle(el) {
 }
 
 // ============================================================
-// 9. KPI И АНАЛИТИКА
+// 10. KPI И АНАЛИТИКА
 // ============================================================
 function updateKPI() {
     let objs = data.objects.length, ests = 0, bud = 0, done = 0;
@@ -1133,7 +1136,7 @@ function renderAnalytics() {
 }
 
 // ============================================================
-// 10. ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ (с проверками роли)
+// 11. ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ (с проверками роли)
 // ============================================================
 let ctx = { type: '', objId: null, estId: null };
 
@@ -1524,7 +1527,7 @@ function toggleP(el) {
 }
 
 // ============================================================
-// 11. ЗАПУСК
+// 12. ЗАПУСК
 // ============================================================
 window.openModal = openModal;
 window.closeModal = closeModal;
