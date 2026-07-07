@@ -795,13 +795,13 @@
           "status": "active",
           "works": [
             {
-              "name": "Новая работа",
+              "name": "Демонтаж",
               "unit": "шт",
               "qty": 10,
               "price": 120
             },
             {
-              "name": "Новая работа",
+              "name": "Уборка",
               "unit": "шт",
               "qty": 150,
               "price": 200
@@ -868,5 +868,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:37:55.538Z"
+  "updatedAt": "2026-07-07T17:38:13.492Z"
 }
