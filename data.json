@@ -5,7 +5,7 @@
       "name": "Сущевский вал",
       "estimates": [
         {
-          "id": 101,
+          "id": 1,
           "name": "Снос №1 у Арки",
           "budget": 1497674.21999,
           "done": 1497674.21999,
@@ -183,7 +183,7 @@
           ]
         },
         {
-          "id": 102,
+          "id": 2,
           "name": "Снос 3х этажки трапеция внутренний двор",
           "budget": 4021747.12001,
           "done": 0,
@@ -241,7 +241,7 @@
           "ksList": []
         },
         {
-          "id": 103,
+          "id": 3,
           "name": "Демонтаж 1-2й этаж стр 3",
           "budget": 1310104.8,
           "done": 1310104.8,
@@ -354,7 +354,7 @@
           ]
         },
         {
-          "id": 104,
+          "id": 4,
           "name": "Снос перехода мост",
           "budget": 327282.5,
           "done": 327282.5,
@@ -449,18 +449,8 @@
     }
   ],
   "payments": [],
-  "invites": [
-    {
-      "id": 1783449516565,
-      "name": "Роман",
-      "phone": "+79773180505",
-      "code": "2XNT8SW3MGAN",
-      "link": "https://ekaterinad1285-byte.github.io/dashboard-smeta/?invite=2XNT8SW3MGAN",
-      "active": true,
-      "createdAt": "2026-07-07T18:38:36.565Z"
-    }
-  ],
+  "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T18:42:59.551Z"
+  "updatedAt": "2026-07-07T19:18:32.323Z"
 }
