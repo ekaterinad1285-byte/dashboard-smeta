@@ -179,7 +179,7 @@
                 <button class="btn btn-primary btn-sm" onclick="saveRepoSettings()">💾 Сохранить</button>
             </div>
             <p style="margin-top:8px; font-size:13px; color:#92400e;">
-                📖 <a href="#" onclick="showRepoInstructions(); return false;" style="color:#d97706;">Как создать токен с правом public_repo?</a>
+                📖 <a href="#" onclick="showRepoInstructions(); return false;" style="color:#d97706;">Как создать токен с правом repo?</a>
             </p>
         </div>
 
@@ -242,7 +242,7 @@
     </div>
 </div>
 
-<!-- Модалка приглашения -->
+<!-- Модалки -->
 <div class="modal-overlay" id="inviteModal"><div class="modal">
     <div class="modal-title" id="inviteModalTitle">📨 Создать приглашение</div>
     <label>👤 Имя руководителя</label>
@@ -264,7 +264,7 @@
     </div>
 </div></div>
 
-<!-- Остальные модалки -->
+<!-- Остальные модалки (сокращены для длины) -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal">
     <div class="modal-title" id="modalTitle">Добавить</div>
     <label>Название</label><input id="modalInput">
@@ -309,16 +309,12 @@
 
 <script>
 // ============================================================
-// НОВАЯ ВЕРСИЯ: ХРАНЕНИЕ ДАННЫХ В РЕПОЗИТОРИИ
-// ============================================================
-
-// ============================================================
-// 0. КОНФИГУРАЦИЯ РЕПОЗИТОРИЯ
+// ФИНАЛЬНАЯ ВЕРСИЯ: ПОЛНАЯ ПЕРЕРАБОТКА СИНХРОНИЗАЦИИ
 // ============================================================
 
 const REPO_FILE_PATH = 'data.json';
 
-// Функция для кодирования UTF-8 строк в Base64 (поддерживает русские буквы)
+// Функция для кодирования UTF-8 в Base64
 function utf8ToBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
 }
@@ -375,12 +371,12 @@ function loadRepoSettings() {
 
 function showRepoInstructions() {
     alert(
-        '📖 Как создать токен с правом public_repo:\n\n' +
+        '📖 Как создать токен с правом repo:\n\n' +
         '1. Зайдите на github.com/settings/tokens\n' +
         '2. Нажмите "Generate new token (classic)"\n' +
-        '3. Название: smeta-repo\n' +
+        '3. Название: smeta-full\n' +
         '4. Срок: No expiration\n' +
-        '5. В разделе "Scopes" отметьте ТОЛЬКО public_repo\n' +
+        '5. В разделе "Scopes" отметьте repo (полный доступ)\n' +
         '6. Нажмите "Generate token" и скопируйте токен'
     );
 }
@@ -392,8 +388,28 @@ function updateSyncStatus(text, type = '') {
 }
 
 // ============================================================
-// 3. СИНХРОНИЗАЦИЯ С РЕПОЗИТОРИЕМ
+// 3. СИНХРОНИЗАЦИЯ С РЕПОЗИТОРИЕМ (С ПРИНУДИТЕЛЬНЫМ ОБНОВЛЕНИЕМ SHA)
 // ============================================================
+
+async function getShaFromRepo() {
+    if (!REPO_OWNER || !REPO_NAME || !REPO_TOKEN) return null;
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_FILE_PATH}`;
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${REPO_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data.sha;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
 
 async function syncFromRepo(silent = false) {
     if (!REPO_OWNER || !REPO_NAME || !REPO_TOKEN) {
@@ -418,30 +434,29 @@ async function syncFromRepo(silent = false) {
         if (response.status === 401) {
             throw new Error('Недействительный токен. Пожалуйста, проверьте настройки.');
         }
-        
         if (response.status === 403) {
-            throw new Error('Недостаточно прав для доступа к репозиторию. Убедитесь, что у токена есть право public_repo.');
+            throw new Error('Недостаточно прав. Убедитесь, что у токена есть право repo.');
         }
-        
         if (response.status === 404) {
-            throw new Error(`Файл ${REPO_FILE_PATH} не найден в репозитории. Создайте его через GitHub.`);
+            // Файл не найден – создадим его при первом сохранении
+            if (!silent) {
+                alert('Файл data.json не найден. Он будет создан при первом сохранении данных.');
+            }
+            // Создаём пустой файл принудительно
+            await pushToRepo(true);
+            return;
         }
-        
         if (!response.ok) {
             throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        
-        // Сохраняем SHA для будущих обновлений
         if (data.sha) {
             REPO_SHA = data.sha;
             localStorage.setItem('repoSha', data.sha);
         }
         
-        // Декодируем содержимое (base64)
         const content = JSON.parse(atob(data.content));
-        
         if (content.objects) data.objects = content.objects;
         if (content.payments) data.payments = content.payments;
         if (content.invites) {
@@ -472,10 +487,10 @@ async function syncFromRepo(silent = false) {
 }
 
 // ============================================================
-// 4. ОСНОВНАЯ ФУНКЦИЯ СОХРАНЕНИЯ В РЕПОЗИТОРИЙ
+// 4. ОСНОВНАЯ ФУНКЦИЯ СОХРАНЕНИЯ (С ПРИНУДИТЕЛЬНЫМ SHA)
 // ============================================================
 
-async function pushToRepo(retryCount = 0) {
+async function pushToRepo(forceCreate = false) {
     if (!REPO_OWNER || !REPO_NAME || !REPO_TOKEN) {
         alert('⚠️ Сначала настройте подключение к репозиторию');
         return false;
@@ -484,6 +499,15 @@ async function pushToRepo(retryCount = 0) {
     updateSyncStatus('🔄 Сохранение...', 'loading');
     
     try {
+        // Всегда получаем свежий SHA перед сохранением
+        const freshSha = await getShaFromRepo();
+        if (freshSha) {
+            REPO_SHA = freshSha;
+            localStorage.setItem('repoSha', freshSha);
+        } else if (!forceCreate) {
+            throw new Error('Не удалось получить SHA файла. Проверьте токен и права доступа.');
+        }
+        
         const invites = data.invites || JSON.parse(localStorage.getItem('dashInvites') || '[]');
         const adminPass = localStorage.getItem('dashAdminPass') || '';
         
@@ -497,11 +521,9 @@ async function pushToRepo(retryCount = 0) {
         };
         
         const jsonString = JSON.stringify(fullData, null, 2);
-        console.log('📤 Отправляем в репозиторий:', jsonString);
+        console.log('📤 Сохраняем данные в репозиторий');
         
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_FILE_PATH}`;
-        
-        // Подготовка payload
         const payload = {
             message: `Обновление данных ${new Date().toISOString()}`,
             content: utf8ToBase64(jsonString),
@@ -518,31 +540,34 @@ async function pushToRepo(retryCount = 0) {
             body: JSON.stringify(payload)
         });
         
-        // === ОБРАБОТКА ОШИБКИ 409 (конфликт) ===
+        // Если 409 – конфликт, обновляем SHA и повторяем
         if (response.status === 409) {
-            if (retryCount < 3) {
-                console.warn(`⚠️ Конфликт (409), попытка ${retryCount + 1} из 3...`);
-                updateSyncStatus(`🔄 Конфликт, повтор ${retryCount + 1}/3...`, 'loading');
-                await syncFromRepo(true);
-                return await pushToRepo(retryCount + 1);
+            const newSha = await getShaFromRepo();
+            if (newSha) {
+                REPO_SHA = newSha;
+                localStorage.setItem('repoSha', newSha);
+                // Повторяем сохранение с новым SHA
+                return await pushToRepo(forceCreate);
             } else {
-                throw new Error('Не удалось разрешить конфликт после 3 попыток');
+                throw new Error('Не удалось получить актуальный SHA для разрешения конфликта');
             }
         }
-        // ==============================
         
-        // === ОБРАБОТКА ОШИБКИ 401 ===
         if (response.status === 401) {
             throw new Error('Недействительный токен. Пожалуйста, проверьте настройки.');
         }
-        // ==============================
-        
-        // === ОБРАБОТКА ОШИБКИ 403 ===
         if (response.status === 403) {
-            throw new Error('Недостаточно прав для записи в репозиторий. Убедитесь, что у токена есть право public_repo.');
+            throw new Error('Недостаточно прав для записи. Убедитесь, что у токена есть право repo.');
         }
-        // ==============================
-        
+        if (response.status === 422) {
+            // Возможно, файл повреждён – пересоздаём
+            const errorText = await response.text();
+            console.warn('Ошибка 422, пробуем пересоздать файл:', errorText);
+            // Удаляем старый SHA и повторяем попытку
+            REPO_SHA = null;
+            localStorage.removeItem('repoSha');
+            return await pushToRepo(true);
+        }
         if (!response.ok) {
             throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }
@@ -569,13 +594,11 @@ async function pushToRepo(retryCount = 0) {
 }
 
 // ============================================================
-// 5. СИСТЕМА ПРИГЛАШЕНИЙ
+// 5. ОСТАЛЬНЫЕ ФУНКЦИИ (СОКРАЩЕНЫ ДЛЯ ДЛИНЫ, НО РАБОЧИЕ)
 // ============================================================
 
 function getInvites() {
-    if (data && data.invites) {
-        return data.invites;
-    }
+    if (data && data.invites) return data.invites;
     let saved = localStorage.getItem('dashInvites');
     if (saved) {
         try { return JSON.parse(saved); } catch(e) {}
@@ -750,7 +773,7 @@ function updateButtonsByRole() {
 })();
 
 // ============================================================
-// 6. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
+// 6. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ (СОКРАЩЕНО)
 // ============================================================
 
 function openInviteModal() {
@@ -758,12 +781,10 @@ function openInviteModal() {
     const code = generateInviteCode();
     document.getElementById('inviteName').value = '';
     document.getElementById('invitePhone').value = '';
-    
     const baseUrl = window.location.href.split('?')[0];
     const link = baseUrl + '?invite=' + code;
     document.getElementById('inviteLinkDisplay').value = link;
     document.getElementById('inviteLinkDisplay').dataset.code = code;
-    
     document.getElementById('inviteModalTitle').textContent = '📨 Создать приглашение';
     document.getElementById('inviteModal').style.display = 'flex';
 }
@@ -792,17 +813,14 @@ function saveInvite() {
     const linkInput = document.getElementById('inviteLinkDisplay');
     const code = linkInput.dataset.code;
     const link = linkInput.value;
-    
     if (!name) { alert('Введите имя руководителя'); return; }
     if (!phone) { alert('Введите номер телефона'); return; }
     if (!code) { alert('Ошибка: код не сгенерирован'); return; }
-    
     const invites = getInvites();
     if (invites.some(i => i.code === code)) {
         alert('Такой код уже существует! Обновите страницу.');
         return;
     }
-    
     invites.push({
         id: Date.now(),
         name: name,
@@ -812,26 +830,22 @@ function saveInvite() {
         active: true,
         createdAt: new Date().toISOString()
     });
-    
     saveInvites(invites);
     closeInviteModal();
     renderInvites();
-    
-    alert(`✅ Приглашение создано!\n\n👤 Имя: ${name}\n📱 Телефон: ${phone}\n🔗 Ссылка: ${link}\n\nОтправьте ссылку руководителю.`);
+    alert(`✅ Приглашение создано!\n\n👤 Имя: ${name}\n📱 Телефон: ${phone}\n🔗 Ссылка: ${link}`);
 }
 
 function renderInvites() {
     const container = document.getElementById('inviteList');
     const message = document.getElementById('inviteMessage');
     const invites = getInvites();
-    
     if (!invites || invites.length === 0) {
         container.innerHTML = '';
         message.style.display = 'block';
         return;
     }
     message.style.display = 'none';
-    
     let html = '';
     invites.forEach(inv => {
         const statusClass = inv.active ? 'active' : 'inactive';
@@ -856,58 +870,10 @@ function renderInvites() {
     container.innerHTML = html;
 }
 
-function revokeInvite(id) {
-    if (!isAdmin()) return;
-    if (!confirm('Отозвать доступ для этого руководителя?')) return;
-    const invites = getInvites();
-    const inv = invites.find(i => i.id === id);
-    if (inv) {
-        inv.active = false;
-        saveInvites(invites);
-        renderInvites();
-        alert(`✅ Доступ для ${inv.name} отозван.`);
-    }
-}
-
-function restoreInvite(id) {
-    if (!isAdmin()) return;
-    const invites = getInvites();
-    const inv = invites.find(i => i.id === id);
-    if (inv) {
-        inv.active = true;
-        saveInvites(invites);
-        renderInvites();
-        alert(`✅ Доступ для ${inv.name} восстановлен.`);
-    }
-}
-
-function deleteInvite(id) {
-    if (!isAdmin()) return;
-    const invites = getInvites();
-    const inv = invites.find(i => i.id === id);
-    if (!inv) return;
-    if (!confirm(`Удалить приглашение для ${inv.name} навсегда?`)) return;
-    
-    const newInvites = invites.filter(i => i.id !== id);
-    saveInvites(newInvites);
-    renderInvites();
-    alert(`🗑️ Приглашение для ${inv.name} удалено.`);
-}
-
-function copyInviteLinkById(id) {
-    const invites = getInvites();
-    const inv = invites.find(i => i.id === id);
-    if (!inv || !inv.link) return;
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(inv.link).then(() => {
-            alert('📋 Ссылка скопирована!');
-        }).catch(() => {
-            prompt('Скопируйте ссылку вручную:', inv.link);
-        });
-    } else {
-        prompt('Скопируйте ссылку вручную:', inv.link);
-    }
-}
+function revokeInvite(id) { if (!isAdmin()) return; if (!confirm('Отозвать доступ?')) return; const invites = getInvites(); const inv = invites.find(i => i.id === id); if (inv) { inv.active = false; saveInvites(invites); renderInvites(); alert(`✅ Доступ для ${inv.name} отозван.`); } }
+function restoreInvite(id) { if (!isAdmin()) return; const invites = getInvites(); const inv = invites.find(i => i.id === id); if (inv) { inv.active = true; saveInvites(invites); renderInvites(); alert(`✅ Доступ для ${inv.name} восстановлен.`); } }
+function deleteInvite(id) { if (!isAdmin()) return; const invites = getInvites(); const inv = invites.find(i => i.id === id); if (!inv) return; if (!confirm(`Удалить приглашение для ${inv.name}?`)) return; const newInvites = invites.filter(i => i.id !== id); saveInvites(newInvites); renderInvites(); alert(`🗑️ Приглашение для ${inv.name} удалено.`); }
+function copyInviteLinkById(id) { const invites = getInvites(); const inv = invites.find(i => i.id === id); if (!inv || !inv.link) return; if (navigator.clipboard) { navigator.clipboard.writeText(inv.link).then(() => { alert('📋 Ссылка скопирована!'); }).catch(() => { prompt('Скопируйте ссылку вручную:', inv.link); }); } else { prompt('Скопируйте ссылку вручную:', inv.link); } }
 
 // ============================================================
 // 7. ДАННЫЕ
@@ -977,53 +943,17 @@ function generateId(type) {
 }
 
 // ============================================================
-// 8. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// 8. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ОСТАЛЬНЫЕ)
 // ============================================================
 function fmt(v) { return (v || 0).toLocaleString('ru-RU') + ' ₽'; }
 function pct(v) { return (v || 0).toFixed(0) + '%'; }
-
-function getEstimate(id) {
-    for (const obj of data.objects) {
-        for (const est of obj.estimates) {
-            if (est.id === id) return est;
-        }
-    }
-    return null;
-}
-
-function getKs(id) {
-    for (const obj of data.objects) {
-        for (const est of obj.estimates) {
-            if (est.ksList) {
-                for (const ks of est.ksList) {
-                    if (ks.id === id) return ks;
-                }
-            }
-        }
-    }
-    return null;
-}
-
-function getObject(id) {
-    return data.objects.find(o => o.id === id);
-}
-
-function getTotalPaymentsForObject(objId) {
-    let total = 0;
-    const obj = getObject(objId);
-    if (!obj) return 0;
-    obj.estimates.forEach(est => {
-        data.payments.forEach(p => {
-            if (p.estimateId === est.id) {
-                total += p.amount || 0;
-            }
-        });
-    });
-    return total;
-}
+function getEstimate(id) { for (const obj of data.objects) { for (const est of obj.estimates) { if (est.id === id) return est; } } return null; }
+function getKs(id) { for (const obj of data.objects) { for (const est of obj.estimates) { if (est.ksList) { for (const ks of est.ksList) { if (ks.id === id) return ks; } } } } return null; }
+function getObject(id) { return data.objects.find(o => o.id === id); }
+function getTotalPaymentsForObject(objId) { let total = 0; const obj = getObject(objId); if (!obj) return 0; obj.estimates.forEach(est => { data.payments.forEach(p => { if (p.estimateId === est.id) { total += p.amount || 0; } }); }); return total; }
 
 // ============================================================
-// 9. ПЕРЕСЧЁТ И РЕНДЕРИНГ
+// 9. РЕНДЕРИНГ (СОКРАЩЕН, НО РАБОЧИЙ)
 // ============================================================
 function recalcAll() {
     data.objects.forEach(obj => {
@@ -1049,7 +979,6 @@ function recalcAll() {
 
 function render() {
     recalcAll();
-    
     let html = '';
     data.objects.forEach(obj => {
         const objPayments = getTotalPaymentsForObject(obj.id);
@@ -1060,7 +989,6 @@ function render() {
             <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openModal('object',null,${obj.id})">✎</button>
             <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delObj(${obj.id})">✕</button>
         </span></div><div class="children">`;
-        
         obj.estimates.forEach(est => {
             let pr = est.budget > 0 ? (est.done / est.budget * 100) : 0;
             let cl = est.status === 'completed' ? 'green' : 'yellow';
@@ -1074,7 +1002,6 @@ function render() {
                 <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openModal('estimate',${obj.id},${est.id})">✎</button>
                 <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delEst(${obj.id},${est.id})">✕</button>
             </span></div><div class="children">`;
-            
             if (est.ksList && est.ksList.length > 0) {
                 est.ksList.forEach(ks => {
                     let kpr = ks.budget > 0 ? (ks.done / ks.budget * 100) : 0;
@@ -1096,7 +1023,6 @@ function render() {
         html += `</div></div>`;
     });
     document.getElementById('treeContainer').innerHTML = html;
-    
     updateKPI();
     renderAnalytics();
     renderPayments();
@@ -1104,18 +1030,8 @@ function render() {
     updateButtonsByRole();
 }
 
-function toggle(el) {
-    let c = el.parentElement.querySelector('.children');
-    let t = el.querySelector('.toggle');
-    if (c) {
-        if (c.style.display === 'none') { c.style.display = 'block'; t.textContent = '▼'; }
-        else { c.style.display = 'none'; t.textContent = '▶'; }
-    }
-}
+function toggle(el) { let c = el.parentElement.querySelector('.children'); let t = el.querySelector('.toggle'); if (c) { if (c.style.display === 'none') { c.style.display = 'block'; t.textContent = '▼'; } else { c.style.display = 'none'; t.textContent = '▶'; } } }
 
-// ============================================================
-// 10. KPI И АНАЛИТИКА
-// ============================================================
 function updateKPI() {
     let objs = data.objects.length, ests = 0, bud = 0, done = 0;
     data.objects.forEach(o => {
@@ -1136,17 +1052,14 @@ function renderAnalytics() {
             items.push({ n: o.name + ' → ' + e.name, b: e.budget, d: e.done });
         });
     });
-    
     let c1 = document.getElementById('estimatesChart'), c2 = document.getElementById('progressChart');
     if (!items.length) {
         c1.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:10px;font-size:14px;">Нет данных</div>';
         c2.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:10px;font-size:14px;">Нет данных</div>';
         return;
     }
-    
     let max = Math.max(...items.map(i => i.b), 1);
     c1.innerHTML = items.map(i => `<div class="chart-item"><div class="label"><span>${i.n}</span><span>${fmt(i.d)} / ${fmt(i.b)}</span></div><div class="bar"><div class="fill" style="width:${Math.min(100, i.b/max*100)}%;background:#e9edf2;"></div></div><div class="bar"><div class="fill" style="width:${Math.min(100, i.d/max*100)}%;background:#2563eb;margin-top:-4px;"></div></div></div>`).join('');
-    
     c2.innerHTML = items.map(i => {
         let p = i.b > 0 ? (i.d / i.b * 100) : 0;
         let c = p >= 100 ? '#0b8a5e' : p >= 50 ? '#f59e0b' : '#2563eb';
@@ -1155,204 +1068,28 @@ function renderAnalytics() {
 }
 
 // ============================================================
-// 11. ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ
+// 10. ОСТАЛЬНЫЕ ФУНКЦИИ (ОТКРЫТИЕ МОДАЛОК, ИМПОРТ И Т.Д.)
 // ============================================================
 let ctx = { type: '', objId: null, estId: null };
-
-function openModal(type, objId, estId) {
-    if (!isAdmin()) return alert('⚠️ Только администратор может редактировать данные');
-    ctx = { type, objId, estId };
-    let ov = document.getElementById('modalOverlay');
-    let ti = document.getElementById('modalTitle');
-    let inp = document.getElementById('modalInput');
-    let ex = document.getElementById('modalExtra');
-    ex.innerHTML = '';
-    
-    if (type === 'object') {
-        ti.textContent = estId ? '✎ Редактировать объект' : '➕ Добавить объект';
-        inp.value = estId ? (getObject(estId)?.name || '') : '';
-        ctx.objId = estId;
-    } else if (type === 'estimate') {
-        ti.textContent = estId ? '✎ Редактировать смету' : '➕ Добавить смету';
-        let e = estId ? getEstimate(estId) : null;
-        inp.value = e ? e.name : '';
-        ctx.objId = objId;
-        ctx.estId = estId;
-    }
-    ov.style.display = 'flex';
-}
-
+function openModal(type, objId, estId) { if (!isAdmin()) return alert('⚠️ Только администратор может редактировать данные'); ctx = { type, objId, estId }; let ov = document.getElementById('modalOverlay'); let ti = document.getElementById('modalTitle'); let inp = document.getElementById('modalInput'); let ex = document.getElementById('modalExtra'); ex.innerHTML = ''; if (type === 'object') { ti.textContent = estId ? '✎ Редактировать объект' : '➕ Добавить объект'; inp.value = estId ? (getObject(estId)?.name || '') : ''; ctx.objId = estId; } else if (type === 'estimate') { ti.textContent = estId ? '✎ Редактировать смету' : '➕ Добавить смету'; let e = estId ? getEstimate(estId) : null; inp.value = e ? e.name : ''; ctx.objId = objId; ctx.estId = estId; } ov.style.display = 'flex'; }
 function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-
-function modalSave() {
-    if (!isAdmin()) return;
-    let n = document.getElementById('modalInput').value.trim();
-    if (!n) return alert('Введите название');
-    
-    if (ctx.type === 'object') {
-        if (ctx.objId) {
-            let o = getObject(ctx.objId);
-            if (o) o.name = n;
-        } else {
-            data.objects.push({ id: generateId('object'), name: n, estimates: [] });
-        }
-    } else if (ctx.type === 'estimate') {
-        let o = getObject(ctx.objId);
-        if (!o) return alert('Объект не найден');
-        if (ctx.estId) {
-            let e = getEstimate(ctx.estId);
-            if (e) e.name = n;
-        } else {
-            o.estimates.push({ id: generateId('estimate'), name: n, budget: 0, done: 0, status: 'active', works: [], ksList: [] });
-        }
-    }
-    closeModal();
-    saveData();
-    render();
-}
+function modalSave() { if (!isAdmin()) return; let n = document.getElementById('modalInput').value.trim(); if (!n) return alert('Введите название'); if (ctx.type === 'object') { if (ctx.objId) { let o = getObject(ctx.objId); if (o) o.name = n; } else { data.objects.push({ id: generateId('object'), name: n, estimates: [] }); } } else if (ctx.type === 'estimate') { let o = getObject(ctx.objId); if (!o) return alert('Объект не найден'); if (ctx.estId) { let e = getEstimate(ctx.estId); if (e) e.name = n; } else { o.estimates.push({ id: generateId('estimate'), name: n, budget: 0, done: 0, status: 'active', works: [], ksList: [] }); } } closeModal(); saveData(); render(); }
 
 // Импорт
 let impCtx = { type: '', target: null };
-
-function openImportModal(type, target) {
-    if (!isAdmin()) return alert('⚠️ Только администратор может импортировать данные');
-    impCtx = { type, target };
-    let ov = document.getElementById('importModal');
-    let ti = document.getElementById('importModalTitle');
-    let e = type === 'estimate' ? getEstimate(target) : null;
-    ti.textContent = type === 'object' ? '📥 Импорт объекта' :
-                     type === 'estimate' ? `📥 Импорт в "${e ? e.name : ''}"` :
-                     `📥 Импорт в КС`;
-    document.getElementById('importData').value = '';
-    ov.style.display = 'flex';
-}
-
+function openImportModal(type, target) { if (!isAdmin()) return alert('⚠️ Только администратор может импортировать данные'); impCtx = { type, target }; let ov = document.getElementById('importModal'); let ti = document.getElementById('importModalTitle'); let e = type === 'estimate' ? getEstimate(target) : null; ti.textContent = type === 'object' ? '📥 Импорт объекта' : type === 'estimate' ? `📥 Импорт в "${e ? e.name : ''}"` : `📥 Импорт в КС`; document.getElementById('importData').value = ''; ov.style.display = 'flex'; }
 function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
-
-function importFromGoogle() {
-    if (!isAdmin()) return;
-    let raw = document.getElementById('importData').value;
-    if (!raw.trim()) return alert('Вставьте данные');
-    
-    let lines = raw.split('\n').filter(l => l.trim());
-    let works = [];
-    for (let line of lines) {
-        let p = line.split('\t').map(s => s.trim()).filter(s => s);
-        if (p.length < 3) p = line.split(/\s{2,}/).map(s => s.trim()).filter(s => s);
-        if (p.length >= 3) {
-            let name = p[0], unit = p[1] || '';
-            let qty = parseFloat(p[2].replace(/,/g, '.')) || 0;
-            let price = p.length >= 4 ? parseFloat(p[3].replace(/,/g, '.')) || 0 : 0;
-            if (name.includes('%')) continue;
-            if (qty > 0 && price > 0) works.push({ name, unit, qty, price });
-        }
-    }
-    if (!works.length) return alert('Не удалось распознать данные');
-    
-    let type = impCtx.type, target = impCtx.target;
-    if (type === 'object') {
-        let name = prompt('Название объекта:', 'Новый объект') || 'Новый объект';
-        let o = { id: generateId('object'), name, estimates: [] };
-        let e = { id: generateId('estimate'), name: name + ' (смета)', budget: works.reduce((s, w) => s + w.qty * w.price, 0), done: 0, status: 'active', works: works, ksList: [] };
-        o.estimates.push(e);
-        data.objects.push(o);
-    } else if (type === 'estimate') {
-        let e = getEstimate(target);
-        if (!e) return alert('Смета не найдена');
-        e.works = works;
-        e.budget = works.reduce((s, w) => s + w.qty * w.price, 0);
-    } else if (type === 'ks') {
-        let e = getEstimate(target);
-        if (!e) return alert('Смета не найдена');
-        let bud = works.reduce((s, w) => s + w.qty * w.price, 0);
-        let newId = generateId('ks');
-        if (!e.ksList) e.ksList = [];
-        e.ksList.push({ id: newId, name: 'КС-2-' + String(newId).padStart(2, '0') + ' (импорт)', ksNumber: 'КС-2-' + String(newId).padStart(2, '0'), advance: 0, budget: bud, done: 0, status: 'active', works: works.map(w => ({ ...w, done: 0 })) });
-    }
-    closeImportModal();
-    saveData();
-    render();
-    alert('✅ Импортировано ' + works.length + ' позиций');
-}
+function importFromGoogle() { if (!isAdmin()) return; let raw = document.getElementById('importData').value; if (!raw.trim()) return alert('Вставьте данные'); let lines = raw.split('\n').filter(l => l.trim()); let works = []; for (let line of lines) { let p = line.split('\t').map(s => s.trim()).filter(s => s); if (p.length < 3) p = line.split(/\s{2,}/).map(s => s.trim()).filter(s => s); if (p.length >= 3) { let name = p[0], unit = p[1] || ''; let qty = parseFloat(p[2].replace(/,/g, '.')) || 0; let price = p.length >= 4 ? parseFloat(p[3].replace(/,/g, '.')) || 0 : 0; if (name.includes('%')) continue; if (qty > 0 && price > 0) works.push({ name, unit, qty, price }); } } if (!works.length) return alert('Не удалось распознать данные'); let type = impCtx.type, target = impCtx.target; if (type === 'object') { let name = prompt('Название объекта:', 'Новый объект') || 'Новый объект'; let o = { id: generateId('object'), name, estimates: [] }; let e = { id: generateId('estimate'), name: name + ' (смета)', budget: works.reduce((s, w) => s + w.qty * w.price, 0), done: 0, status: 'active', works: works, ksList: [] }; o.estimates.push(e); data.objects.push(o); } else if (type === 'estimate') { let e = getEstimate(target); if (!e) return alert('Смета не найдена'); e.works = works; e.budget = works.reduce((s, w) => s + w.qty * w.price, 0); } else if (type === 'ks') { let e = getEstimate(target); if (!e) return alert('Смета не найдена'); let bud = works.reduce((s, w) => s + w.qty * w.price, 0); let newId = generateId('ks'); if (!e.ksList) e.ksList = []; e.ksList.push({ id: newId, name: 'КС-2-' + String(newId).padStart(2, '0') + ' (импорт)', ksNumber: 'КС-2-' + String(newId).padStart(2, '0'), advance: 0, budget: bud, done: 0, status: 'active', works: works.map(w => ({ ...w, done: 0 })) }); } closeImportModal(); saveData(); render(); alert('✅ Импортировано ' + works.length + ' позиций'); }
 
 // Работы
-function openWorks(id) {
-    let e = getEstimate(id);
-    if (!e) return;
-    document.getElementById('worksModalTitle').textContent = '📄 Смета: ' + e.name;
-    let c = document.getElementById('worksList');
-    let h = '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>Кол-во</span><span>Цена</span><span>Стоимость</span><span>🔄</span></div>';
-    (e.works || []).forEach((w, i) => {
-        let cst = (w.qty || 0) * (w.price || 0);
-        h += `<div class="work-item">
-            <input value="${w.name || ''}" data-i="${i}" data-f="name" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
-            <input value="${w.unit || ''}" data-i="${i}" data-f="unit" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
-            <input type="number" step="0.01" value="${w.qty || 0}" data-i="${i}" data-f="qty" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
-            <input type="number" step="0.01" value="${w.price || 0}" data-i="${i}" data-f="price" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
-            <span id="wc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span>
-            <button class="btn btn-danger btn-sm" onclick="delW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button>
-        </div>`;
-    });
-    h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addW(${id})">+ Позиция</button>
-        <button class="btn btn-success btn-sm" onclick="closeWorksModal();setTimeout(()=>openImportModal('estimate',${id}),100)">📥 Импорт</button>` : ''}
-    </div>`;
-    let bud = (e.works || []).reduce((s, w) => s + (w.qty || 0) * (w.price || 0), 0);
-    h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Бюджет: ${fmt(bud)}</strong></span><span></span></div>`;
-    c.innerHTML = h;
-    document.getElementById('worksModal').style.display = 'flex';
-}
-
+function openWorks(id) { let e = getEstimate(id); if (!e) return; document.getElementById('worksModalTitle').textContent = '📄 Смета: ' + e.name; let c = document.getElementById('worksList'); let h = '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>Кол-во</span><span>Цена</span><span>Стоимость</span><span>🔄</span></div>'; (e.works || []).forEach((w, i) => { let cst = (w.qty || 0) * (w.price || 0); h += `<div class="work-item"><input value="${w.name || ''}" data-i="${i}" data-f="name" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}><input value="${w.unit || ''}" data-i="${i}" data-f="unit" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}><input type="number" step="0.01" value="${w.qty || 0}" data-i="${i}" data-f="qty" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}><input type="number" step="0.01" value="${w.price || 0}" data-i="${i}" data-f="price" onchange="updW(${id},this)" ${!isAdmin() ? 'disabled' : ''}><span id="wc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span><button class="btn btn-danger btn-sm" onclick="delW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button></div>`; }); h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addW(${id})">+ Позиция</button><button class="btn btn-success btn-sm" onclick="closeWorksModal();setTimeout(()=>openImportModal('estimate',${id}),100)">📥 Импорт</button>` : ''}</div>`; let bud = (e.works || []).reduce((s, w) => s + (w.qty || 0) * (w.price || 0), 0); h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Бюджет: ${fmt(bud)}</strong></span><span></span></div>`; c.innerHTML = h; document.getElementById('worksModal').style.display = 'flex'; }
 function closeWorksModal() { document.getElementById('worksModal').style.display = 'none'; render(); }
 function addW(id) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; if (!e.works) e.works = []; e.works.push({ name: 'Новая работа', unit: 'шт', qty: 1, price: 0 }); openWorks(id); render(); }
 function delW(id, i) { if (!isAdmin()) return; if (!confirm('Удалить позицию?')) return; let e = getEstimate(id); if (!e) return; e.works.splice(i, 1); openWorks(id); render(); }
 function updW(id, inp) { if (!isAdmin()) return; let e = getEstimate(id); if (!e) return; let i = parseInt(inp.dataset.i); let f = inp.dataset.f; let v = inp.value; if (f === 'qty' || f === 'price') v = parseFloat(v) || 0; if (!e.works[i]) return; e.works[i][f] = v; let cst = (e.works[i].qty || 0) * (e.works[i].price || 0); let sp = document.getElementById('wc-' + id + '-' + i); if (sp) sp.textContent = fmt(cst); saveData(); render(); }
 
-// КС
-function openKs(id) {
-    let ks = getKs(id);
-    if (!ks) { alert('КС не найдена!'); return; }
-    let parentEst = null;
-    for (const obj of data.objects) {
-        for (const est of obj.estimates) {
-            if (est.ksList && est.ksList.some(k => k.id === id)) { parentEst = est; }
-        }
-    }
-    document.getElementById('ksModalTitle').textContent = '✏️ КС: ' + ks.name;
-    let c = document.getElementById('ksWorksList');
-    let h = `<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;font-size:14px;">
-        <label style="font-weight:500;">Название КС:</label>
-        <input value="${ks.name}" id="ksNameInp" style="flex:1;padding:6px 12px;border:1px solid #d1d9e6;border-radius:16px;font-size:14px;" ${!isAdmin() ? 'disabled' : ''}>
-        ${isAdmin() ? `<button class="btn btn-sm btn-outline" onclick="updKsName(${id},document.getElementById('ksNameInp').value)">Сохранить</button>` : ''}
-    </div>`;
-    h += '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>План</span><span>Цена</span><span>Выполнено</span><span>Стоимость</span><span>🔄</span></div>';
-    (ks.works || []).forEach((w, i) => {
-        let cst = (w.done || 0) * (w.price || 0);
-        h += `<div class="work-item">
-            <span style="font-weight:500;">${w.name || ''}</span>
-            <span>${w.unit || ''}</span>
-            <span>${w.qty || 0}</span>
-            <span>${fmt(w.price || 0)}</span>
-            <input type="number" step="0.1" class="done-input" value="${w.done || 0}" data-ki="${i}" onchange="updKsD(${id},this)" ${!isAdmin() ? 'disabled' : ''}>
-            <span id="kc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span>
-            <button class="btn btn-danger btn-sm" onclick="delKsW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button>
-        </div>`;
-    });
-    h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addKsW(${id})">+ Добавить позицию</button>
-        <button class="btn btn-success btn-sm" onclick="closeKsModal();setTimeout(()=>openImportModal('ks',${parentEst ? parentEst.id : null}),100)">📥 Импорт</button>` : ''}
-    </div>`;
-    let done = (ks.works || []).reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0);
-    let rem = ks.budget - done;
-    h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Выполнено: ${fmt(done)}</strong></span><span><strong>Остаток: ${fmt(rem)}</strong></span></div>`;
-    h += `<div class="advance-field">
-        <label>№ КС:</label><input value="${ks.ksNumber || ''}" onchange="updKsNum(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}>
-        <label>Аванс (руб):</label><input type="number" value="${ks.advance || 0}" onchange="updKsAdv(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}>
-    </div>`;
-    c.innerHTML = h;
-    document.getElementById('ksModal').style.display = 'flex';
-}
-
+// КС (сокращено)
+function openKs(id) { let ks = getKs(id); if (!ks) { alert('КС не найдена!'); return; } let parentEst = null; for (const obj of data.objects) { for (const est of obj.estimates) { if (est.ksList && est.ksList.some(k => k.id === id)) { parentEst = est; } } } document.getElementById('ksModalTitle').textContent = '✏️ КС: ' + ks.name; let c = document.getElementById('ksWorksList'); let h = `<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;font-size:14px;"><label style="font-weight:500;">Название КС:</label><input value="${ks.name}" id="ksNameInp" style="flex:1;padding:6px 12px;border:1px solid #d1d9e6;border-radius:16px;font-size:14px;" ${!isAdmin() ? 'disabled' : ''}>${isAdmin() ? `<button class="btn btn-sm btn-outline" onclick="updKsName(${id},document.getElementById('ksNameInp').value)">Сохранить</button>` : ''}</div>`; h += '<div class="work-item header"><span>Наименование</span><span>Ед</span><span>План</span><span>Цена</span><span>Выполнено</span><span>Стоимость</span><span>🔄</span></div>'; (ks.works || []).forEach((w, i) => { let cst = (w.done || 0) * (w.price || 0); h += `<div class="work-item"><span style="font-weight:500;">${w.name || ''}</span><span>${w.unit || ''}</span><span>${w.qty || 0}</span><span>${fmt(w.price || 0)}</span><input type="number" step="0.1" class="done-input" value="${w.done || 0}" data-ki="${i}" onchange="updKsD(${id},this)" ${!isAdmin() ? 'disabled' : ''}><span id="kc-${id}-${i}" style="font-weight:600;font-size:15px;">${fmt(cst)}</span><button class="btn btn-danger btn-sm" onclick="delKsW(${id},${i})" ${!isAdmin() ? 'disabled' : ''}>✕</button></div>`; }); h += `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="addKsW(${id})">+ Добавить позицию</button><button class="btn btn-success btn-sm" onclick="closeKsModal();setTimeout(()=>openImportModal('ks',${parentEst ? parentEst.id : null}),100)">📥 Импорт</button>` : ''}</div>`; let done = (ks.works || []).reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0); let rem = ks.budget - done; h += `<div class="total-row"><span><strong>ИТОГО</strong></span><span></span><span></span><span></span><span><strong>Выполнено: ${fmt(done)}</strong></span><span><strong>Остаток: ${fmt(rem)}</strong></span></div>`; h += `<div class="advance-field"><label>№ КС:</label><input value="${ks.ksNumber || ''}" onchange="updKsNum(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}><label>Аванс (руб):</label><input type="number" value="${ks.advance || 0}" onchange="updKsAdv(${id},this.value)" ${!isAdmin() ? 'disabled' : ''}></div>`; c.innerHTML = h; document.getElementById('ksModal').style.display = 'flex'; }
 function closeKsModal() { document.getElementById('ksModal').style.display = 'none'; render(); }
 function updKsName(id, v) { if (!isAdmin()) return; let ks = getKs(id); if (ks) { ks.name = v.trim() || ks.name; saveData(); render(); } }
 function updKsD(id, inp) { if (!isAdmin()) return; let ks = getKs(id); if (!ks) return; let i = parseInt(inp.dataset.ki); if (!ks.works[i]) return; ks.works[i].done = parseFloat(inp.value) || 0; ks.done = ks.works.reduce((s, w) => s + (w.done || 0) * (w.price || 0), 0); ks.status = ks.done >= ks.budget ? 'completed' : 'active'; let cst = (ks.works[i].done || 0) * (ks.works[i].price || 0); let sp = document.getElementById('kc-' + id + '-' + i); if (sp) sp.textContent = fmt(cst); saveData(); render(); }
@@ -1360,193 +1097,27 @@ function addKsW(id) { if (!isAdmin()) return; let ks = getKs(id); if (!ks) retur
 function delKsW(id, i) { if (!isAdmin()) return; if (!confirm('Удалить позицию из КС?')) return; let ks = getKs(id); if (!ks) return; ks.works.splice(i, 1); openKs(id); render(); }
 function updKsNum(id, v) { if (!isAdmin()) return; let ks = getKs(id); if (ks) ks.ksNumber = v.trim() || '—'; saveData(); }
 function updKsAdv(id, inp) { if (!isAdmin()) return; let ks = getKs(id); if (ks) { ks.advance = parseFloat(inp) || 0; saveData(); render(); } }
-
 function addKs(estId) { if (!isAdmin()) return; let est = getEstimate(estId); if (!est) return; if (!est.ksList) est.ksList = []; if (!est.works) est.works = []; let doneMap = {}; est.ksList.forEach(ks => { if (ks.works) { ks.works.forEach(w => { if (!doneMap[w.name]) doneMap[w.name] = 0; doneMap[w.name] += w.done || 0; }); } }); let remainWorks = est.works.map(w => { let done = doneMap[w.name] || 0; let remain = Math.max(0, (w.qty || 0) - done); return { ...w, qty: remain, done: 0 }; }).filter(w => w.qty > 0 && w.price > 0); if (remainWorks.length === 0) { alert('✅ Все работы по этой смете уже выполнены!'); return; } let remainBudget = remainWorks.reduce((s, w) => s + w.qty * w.price, 0); let newId = generateId('ks'); est.ksList.push({ id: newId, name: 'КС-2-' + String(newId).padStart(2, '0') + ' (остаток)', ksNumber: 'КС-2-' + String(newId).padStart(2, '0'), advance: 0, budget: remainBudget, done: 0, status: 'active', works: remainWorks.map(w => ({ ...w, done: 0 })) }); saveData(); render(); alert('✅ Создана новая КС на остаток: ' + fmt(remainBudget)); }
-
 function delObj(id) { if (!isAdmin()) return; if (!confirm('Удалить объект?')) return; data.objects = data.objects.filter(o => o.id !== id); saveData(); render(); }
 function delEst(oid, eid) { if (!isAdmin()) return; if (!confirm('Удалить смету?')) return; let o = getObject(oid); if (!o) return; o.estimates = o.estimates.filter(e => e.id !== eid); saveData(); render(); }
 function delKs(eid, kid) { if (!isAdmin()) return; if (!confirm('Удалить КС?')) return; let e = getEstimate(eid); if (!e) return; if (e.ksList) e.ksList = e.ksList.filter(k => k.id !== kid); saveData(); render(); }
 
-// Поступления
-function openPaymentModal(editId) {
-    if (!isAdmin()) return alert('⚠️ Только администратор может управлять поступлениями');
-    let sel = document.getElementById('paymentEstimate');
-    let h = '';
-    data.objects.forEach(o => { o.estimates.forEach(e => { h += `<option value="${e.id}">${o.name} → ${e.name}</option>`; }); });
-    sel.innerHTML = h;
-    document.getElementById('paymentAmount').value = '';
-    document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('paymentType').value = 'payment';
-    document.getElementById('paymentEditId').value = '';
-    document.getElementById('paymentDeleteBtn').style.display = 'none';
-    document.getElementById('paymentModalTitle').textContent = '💰 Добавить поступление';
-    if (editId) {
-        let p = data.payments.find(p => p.id === editId);
-        if (p) {
-            sel.value = p.estimateId || '';
-            document.getElementById('paymentType').value = p.type || 'payment';
-            document.getElementById('paymentAmount').value = p.amount || '';
-            document.getElementById('paymentDate').value = p.date || '';
-            document.getElementById('paymentEditId').value = p.id;
-            document.getElementById('paymentDeleteBtn').style.display = 'inline-block';
-            document.getElementById('paymentModalTitle').textContent = '✏️ Редактировать поступление';
-        }
-    }
-    document.getElementById('paymentModal').style.display = 'flex';
-}
-
+// Поступления (сокращено)
+function openPaymentModal(editId) { if (!isAdmin()) return alert('⚠️ Только администратор может управлять поступлениями'); let sel = document.getElementById('paymentEstimate'); let h = ''; data.objects.forEach(o => { o.estimates.forEach(e => { h += `<option value="${e.id}">${o.name} → ${e.name}</option>`; }); }); sel.innerHTML = h; document.getElementById('paymentAmount').value = ''; document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0]; document.getElementById('paymentType').value = 'payment'; document.getElementById('paymentEditId').value = ''; document.getElementById('paymentDeleteBtn').style.display = 'none'; document.getElementById('paymentModalTitle').textContent = '💰 Добавить поступление'; if (editId) { let p = data.payments.find(p => p.id === editId); if (p) { sel.value = p.estimateId || ''; document.getElementById('paymentType').value = p.type || 'payment'; document.getElementById('paymentAmount').value = p.amount || ''; document.getElementById('paymentDate').value = p.date || ''; document.getElementById('paymentEditId').value = p.id; document.getElementById('paymentDeleteBtn').style.display = 'inline-block'; document.getElementById('paymentModalTitle').textContent = '✏️ Редактировать поступление'; } } document.getElementById('paymentModal').style.display = 'flex'; }
 function closePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; }
-
-function savePayment() {
-    if (!isAdmin()) return;
-    let eid = parseInt(document.getElementById('paymentEstimate').value);
-    let amt = parseFloat(document.getElementById('paymentAmount').value);
-    let dt = document.getElementById('paymentDate').value;
-    let tp = document.getElementById('paymentType').value;
-    let editId = document.getElementById('paymentEditId').value;
-    if (!amt || amt <= 0) return alert('Введите сумму');
-    if (!dt) return alert('Выберите дату');
-    if (editId) {
-        let idx = data.payments.findIndex(p => p.id === parseInt(editId));
-        if (idx > -1) data.payments[idx] = { ...data.payments[idx], estimateId: eid, amount: amt, date: dt, type: tp };
-    } else {
-        data.payments.push({ id: generateId('payment'), estimateId: eid, amount: amt, date: dt, type: tp });
-    }
-    closePaymentModal();
-    saveData();
-    render();
-}
-
+function savePayment() { if (!isAdmin()) return; let eid = parseInt(document.getElementById('paymentEstimate').value); let amt = parseFloat(document.getElementById('paymentAmount').value); let dt = document.getElementById('paymentDate').value; let tp = document.getElementById('paymentType').value; let editId = document.getElementById('paymentEditId').value; if (!amt || amt <= 0) return alert('Введите сумму'); if (!dt) return alert('Выберите дату'); if (editId) { let idx = data.payments.findIndex(p => p.id === parseInt(editId)); if (idx > -1) data.payments[idx] = { ...data.payments[idx], estimateId: eid, amount: amt, date: dt, type: tp }; } else { data.payments.push({ id: generateId('payment'), estimateId: eid, amount: amt, date: dt, type: tp }); } closePaymentModal(); saveData(); render(); }
 function deletePaymentFromModal() { if (!isAdmin()) return; let id = document.getElementById('paymentEditId').value; if (!id) return; if (!confirm('Удалить поступление?')) return; data.payments = data.payments.filter(p => p.id !== parseInt(id)); closePaymentModal(); saveData(); render(); }
 function deletePayment(id) { if (!isAdmin()) return; if (!confirm('Удалить поступление?')) return; data.payments = data.payments.filter(p => p.id !== id); saveData(); render(); }
-
-function renderPayments() {
-    let grid = document.getElementById('cashflowGrid');
-    let months = {};
-    data.payments.forEach(p => {
-        if (!p.date) return;
-        let m = p.date.substring(0, 7);
-        if (!months[m]) months[m] = { total: 0, items: [] };
-        months[m].total += p.amount;
-        months[m].items.push(p);
-    });
-    let keys = Object.keys(months).sort();
-    let last = keys.slice(-6);
-    let html = '';
-    if (!last.length) {
-        html = '<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:10px;font-size:14px;">Нет поступлений</div>';
-    } else {
-        last.forEach(m => {
-            let [y, mo] = m.split('-');
-            let mn = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'][parseInt(mo)-1];
-            let d = months[m];
-            html += `<div class="cf-item" onclick="openPaymentDetail('${m}')">
-                <div class="cf-month">${mn} ${y}</div>
-                <div class="cf-value">${fmt(d.total)}</div>
-                <div class="cf-detail">${d.items.length} поступл.</div>
-            </div>`;
-        });
-    }
-    grid.innerHTML = html;
-}
-
-function openPaymentDetail(m) {
-    let mp = data.payments.filter(p => p.date && p.date.startsWith(m));
-    if (!mp.length) { alert('Нет поступлений за этот месяц'); return; }
-    document.getElementById('paymentDetailTitle').textContent = '📋 Детали за ' + m;
-    let detailData = {};
-    data.objects.forEach(o => {
-        o.estimates.forEach(e => {
-            let p = mp.filter(x => x.estimateId === e.id);
-            let total = p.reduce((s, x) => s + x.amount, 0);
-            let adv = p.filter(x => x.type === 'advance').reduce((s, x) => s + x.amount, 0);
-            let pay = p.filter(x => x.type === 'payment').reduce((s, x) => s + x.amount, 0);
-            detailData[e.id] = { name: o.name + ' → ' + e.name, budget: e.budget, payment: pay, advance: adv, totalPaid: total, remain: e.budget - total, paidPercent: e.budget > 0 ? (total / e.budget * 100) : 0, payments: p };
-        });
-    });
-    let h = '<div class="payment-detail-item header"><span>Смета</span><span>Бюджет</span><span>Поступление</span><span>Аванс</span><span>Оплачено</span><span>Остаток</span><span>%</span><span>Действия</span></div>';
-    Object.values(detailData).forEach(d => {
-        let c = d.paidPercent >= 100 ? '#0b8a5e' : d.paidPercent >= 50 ? '#f59e0b' : '#2563eb';
-        h += `<div class="payment-detail-item">
-            <span>${d.name}</span>
-            <span style="font-weight:600;font-size:15px;">${fmt(d.budget)}</span>
-            <span style="font-weight:600;font-size:15px;">${fmt(d.payment)}</span>
-            <span style="font-weight:600;font-size:15px;">${fmt(d.advance)}</span>
-            <span style="font-weight:600;font-size:15px;">${fmt(d.totalPaid)}</span>
-            <span style="font-weight:600;font-size:15px;">${fmt(d.remain)}</span>
-            <span style="font-weight:700;font-size:16px;color:${c};">${pct(d.paidPercent)}</span>
-            <span>
-                ${d.payments.map(p => `
-                    <button class="btn btn-sm btn-outline" onclick="openPaymentModal(${p.id})">✎</button>
-                    <button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id});render();">✕</button>
-                `).join('')}
-            </span>
-        </div>`;
-    });
-    let tb = Object.values(detailData).reduce((s, d) => s + d.budget, 0);
-    let tp = Object.values(detailData).reduce((s, d) => s + d.payment, 0);
-    let ta = Object.values(detailData).reduce((s, d) => s + d.advance, 0);
-    let ttot = Object.values(detailData).reduce((s, d) => s + d.totalPaid, 0);
-    let trem = Object.values(detailData).reduce((s, d) => s + d.remain, 0);
-    let tpct = tb > 0 ? (ttot / tb * 100) : 0;
-    h += `<div class="payment-detail-item" style="font-weight:700;border-top:2px solid #2563eb;background:#f8fafc;border-radius:6px;margin-top:6px;padding-top:6px;font-size:15px;">
-        <span>ИТОГО</span><span>${fmt(tb)}</span><span>${fmt(tp)}</span><span>${fmt(ta)}</span><span>${fmt(ttot)}</span><span>${fmt(trem)}</span>
-        <span style="color:${tpct >= 100 ? '#0b8a5e' : tpct >= 50 ? '#f59e0b' : '#2563eb'};font-size:17px;">${pct(tpct)}</span>
-        <span></span>
-    </div>`;
-    document.getElementById('paymentDetailList').innerHTML = h;
-    document.getElementById('paymentDetailModal').style.display = 'flex';
-}
-
+function renderPayments() { let grid = document.getElementById('cashflowGrid'); let months = {}; data.payments.forEach(p => { if (!p.date) return; let m = p.date.substring(0, 7); if (!months[m]) months[m] = { total: 0, items: [] }; months[m].total += p.amount; months[m].items.push(p); }); let keys = Object.keys(months).sort(); let last = keys.slice(-6); let html = ''; if (!last.length) { html = '<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:10px;font-size:14px;">Нет поступлений</div>'; } else { last.forEach(m => { let [y, mo] = m.split('-'); let mn = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'][parseInt(mo)-1]; let d = months[m]; html += `<div class="cf-item" onclick="openPaymentDetail('${m}')"><div class="cf-month">${mn} ${y}</div><div class="cf-value">${fmt(d.total)}</div><div class="cf-detail">${d.items.length} поступл.</div></div>`; }); } grid.innerHTML = html; }
+function openPaymentDetail(m) { let mp = data.payments.filter(p => p.date && p.date.startsWith(m)); if (!mp.length) { alert('Нет поступлений за этот месяц'); return; } document.getElementById('paymentDetailTitle').textContent = '📋 Детали за ' + m; let detailData = {}; data.objects.forEach(o => { o.estimates.forEach(e => { let p = mp.filter(x => x.estimateId === e.id); let total = p.reduce((s, x) => s + x.amount, 0); let adv = p.filter(x => x.type === 'advance').reduce((s, x) => s + x.amount, 0); let pay = p.filter(x => x.type === 'payment').reduce((s, x) => s + x.amount, 0); detailData[e.id] = { name: o.name + ' → ' + e.name, budget: e.budget, payment: pay, advance: adv, totalPaid: total, remain: e.budget - total, paidPercent: e.budget > 0 ? (total / e.budget * 100) : 0, payments: p }; }); }); let h = '<div class="payment-detail-item header"><span>Смета</span><span>Бюджет</span><span>Поступление</span><span>Аванс</span><span>Оплачено</span><span>Остаток</span><span>%</span><span>Действия</span></div>'; Object.values(detailData).forEach(d => { let c = d.paidPercent >= 100 ? '#0b8a5e' : d.paidPercent >= 50 ? '#f59e0b' : '#2563eb'; h += `<div class="payment-detail-item"><span>${d.name}</span><span style="font-weight:600;font-size:15px;">${fmt(d.budget)}</span><span style="font-weight:600;font-size:15px;">${fmt(d.payment)}</span><span style="font-weight:600;font-size:15px;">${fmt(d.advance)}</span><span style="font-weight:600;font-size:15px;">${fmt(d.totalPaid)}</span><span style="font-weight:600;font-size:15px;">${fmt(d.remain)}</span><span style="font-weight:700;font-size:16px;color:${c};">${pct(d.paidPercent)}</span><span>${d.payments.map(p => `<button class="btn btn-sm btn-outline" onclick="openPaymentModal(${p.id})">✎</button><button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id});render();">✕</button>`).join('')}</span></div>`; }); let tb = Object.values(detailData).reduce((s, d) => s + d.budget, 0); let tp = Object.values(detailData).reduce((s, d) => s + d.payment, 0); let ta = Object.values(detailData).reduce((s, d) => s + d.advance, 0); let ttot = Object.values(detailData).reduce((s, d) => s + d.totalPaid, 0); let trem = Object.values(detailData).reduce((s, d) => s + d.remain, 0); let tpct = tb > 0 ? (ttot / tb * 100) : 0; h += `<div class="payment-detail-item" style="font-weight:700;border-top:2px solid #2563eb;background:#f8fafc;border-radius:6px;margin-top:6px;padding-top:6px;font-size:15px;"><span>ИТОГО</span><span>${fmt(tb)}</span><span>${fmt(tp)}</span><span>${fmt(ta)}</span><span>${fmt(ttot)}</span><span>${fmt(trem)}</span><span style="color:${tpct >= 100 ? '#0b8a5e' : tpct >= 50 ? '#f59e0b' : '#2563eb'};font-size:17px;">${pct(tpct)}</span><span></span></div>`; document.getElementById('paymentDetailList').innerHTML = h; document.getElementById('paymentDetailModal').style.display = 'flex'; }
 function closePaymentDetailModal() { document.getElementById('paymentDetailModal').style.display = 'none'; }
 
 // Дерево поступлений
-function renderPaymentTree() {
-    let c = document.getElementById('paymentTreeContainer');
-    let h = '';
-    data.objects.forEach(o => {
-        const objPayments = getTotalPaymentsForObject(o.id);
-        h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📁 ${o.name}</span><span class="badge blue">${o.estimates.length}</span><span class="badge purple"><span class="num">💰 ${fmt(objPayments)}</span></span></div><div class="children">`;
-        o.estimates.forEach(e => {
-            let p = data.payments.filter(x => x.estimateId === e.id);
-            let total = p.reduce((s, x) => s + x.amount, 0);
-            let pr = e.budget > 0 ? (total / e.budget * 100) : 0;
-            let cl = pr >= 100 ? 'green' : pr >= 50 ? 'yellow' : 'blue';
-            h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📄 ${e.name}</span><span class="badge ${cl}"><span class="num">${fmt(total)}</span> / <span class="num">${fmt(e.budget)}</span> (<span class="num">${pct(pr)}</span>)</span><span class="badge">${p.length}</span></div><div class="children">`;
-            if (!p.length) {
-                h += `<div class="tree-node"><div class="node-content"><span class="toggle">•</span><span class="name" style="color:#94a3b8;font-size:14px;">Нет поступлений</span></div></div>`;
-            } else {
-                p.sort((a, b) => a.date.localeCompare(b.date)).forEach(pp => {
-                    let lbl = pp.type === 'advance' ? '💰 Аванс' : '💳 Поступление';
-                    h += `<div class="tree-node"><div class="node-content">
-                        <span class="toggle">•</span>
-                        <span class="name">${pp.date} — ${lbl}</span>
-                        <span class="badge green" style="font-size:14px;font-weight:600;">${fmt(pp.amount)}</span>
-                        <span class="node-actions">
-                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openPaymentModal(${pp.id})">✎</button>
-                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deletePayment(${pp.id})">✕</button>
-                        </span>
-                    </div></div>`;
-                });
-            }
-            h += `</div></div>`;
-        });
-        h += `</div></div>`;
-    });
-    c.innerHTML = h;
-}
-
-function toggleP(el) {
-    let c = el.parentElement.querySelector('.children');
-    let t = el.querySelector('.toggle');
-    if (c) {
-        if (c.style.display === 'none') { c.style.display = 'block'; t.textContent = '▼'; }
-        else { c.style.display = 'none'; t.textContent = '▶'; }
-    }
-}
+function renderPaymentTree() { let c = document.getElementById('paymentTreeContainer'); let h = ''; data.objects.forEach(o => { const objPayments = getTotalPaymentsForObject(o.id); h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📁 ${o.name}</span><span class="badge blue">${o.estimates.length}</span><span class="badge purple"><span class="num">💰 ${fmt(objPayments)}</span></span></div><div class="children">`; o.estimates.forEach(e => { let p = data.payments.filter(x => x.estimateId === e.id); let total = p.reduce((s, x) => s + x.amount, 0); let pr = e.budget > 0 ? (total / e.budget * 100) : 0; let cl = pr >= 100 ? 'green' : pr >= 50 ? 'yellow' : 'blue'; h += `<div class="tree-node"><div class="node-content" onclick="toggleP(this)"><span class="toggle">▼</span><span class="name">📄 ${e.name}</span><span class="badge ${cl}"><span class="num">${fmt(total)}</span> / <span class="num">${fmt(e.budget)}</span> (<span class="num">${pct(pr)}</span>)</span><span class="badge">${p.length}</span></div><div class="children">`; if (!p.length) { h += `<div class="tree-node"><div class="node-content"><span class="toggle">•</span><span class="name" style="color:#94a3b8;font-size:14px;">Нет поступлений</span></div></div>`; } else { p.sort((a, b) => a.date.localeCompare(b.date)).forEach(pp => { let lbl = pp.type === 'advance' ? '💰 Аванс' : '💳 Поступление'; h += `<div class="tree-node"><div class="node-content"><span class="toggle">•</span><span class="name">${pp.date} — ${lbl}</span><span class="badge green" style="font-size:14px;font-weight:600;">${fmt(pp.amount)}</span><span class="node-actions"><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openPaymentModal(${pp.id})">✎</button><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deletePayment(${pp.id})">✕</button></span></div></div>`; }); } h += `</div></div>`; }); h += `</div></div>`; }); c.innerHTML = h; }
+function toggleP(el) { let c = el.parentElement.querySelector('.children'); let t = el.querySelector('.toggle'); if (c) { if (c.style.display === 'none') { c.style.display = 'block'; t.textContent = '▼'; } else { c.style.display = 'none'; t.textContent = '▶'; } } }
 
 // ============================================================
-// 12. ЗАПУСК
+// 11. ЗАПУСК
 // ============================================================
 window.openModal = openModal;
 window.closeModal = closeModal;
