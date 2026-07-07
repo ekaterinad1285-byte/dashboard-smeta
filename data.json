@@ -28,12 +28,6 @@
               "unit": "шт",
               "qty": 150,
               "price": 2
-            },
-            {
-              "name": "Новая работа",
-              "unit": "шт",
-              "qty": 1,
-              "price": 0
             }
           ],
           "ksList": []
@@ -77,5 +71,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T15:43:16.578Z"
+  "updatedAt": "2026-07-07T15:43:19.769Z"
 }
