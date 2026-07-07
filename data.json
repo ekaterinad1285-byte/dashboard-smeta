@@ -7,7 +7,7 @@
         {
           "id": 101,
           "name": "Снос №1 у Арки",
-          "budget": 200,
+          "budget": 30500,
           "done": 0,
           "status": "active",
           "works": [
@@ -20,14 +20,14 @@
             {
               "name": "Новая работа",
               "unit": "шт",
-              "qty": 1,
-              "price": 0
+              "qty": 100,
+              "price": 300
             },
             {
               "name": "Новая работа",
               "unit": "шт",
-              "qty": 1,
-              "price": 0
+              "qty": 150,
+              "price": 2
             },
             {
               "name": "Новая работа",
@@ -77,5 +77,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T15:42:25.270Z"
+  "updatedAt": "2026-07-07T15:43:15.664Z"
 }
