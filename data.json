@@ -449,8 +449,18 @@
     }
   ],
   "payments": [],
-  "invites": [],
+  "invites": [
+    {
+      "id": 1783451957854,
+      "name": "Роман",
+      "phone": "+79773180505",
+      "code": "66F8DS57QUCM",
+      "link": "https://ekaterinad1285-byte.github.io/dashboard-smeta/?invite=66F8DS57QUCM",
+      "active": true,
+      "createdAt": "2026-07-07T19:19:17.854Z"
+    }
+  ],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T19:18:40.123Z"
+  "updatedAt": "2026-07-07T19:19:41.979Z"
 }
