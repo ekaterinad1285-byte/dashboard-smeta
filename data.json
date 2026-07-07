@@ -243,7 +243,7 @@
         {
           "id": 3,
           "name": "Демонтаж 1-2й этаж стр 3",
-          "budget": 1270800,
+          "budget": 1310104.8,
           "done": 0,
           "status": "active",
           "works": [
@@ -282,6 +282,12 @@
               "unit": "м3",
               "qty": 160,
               "price": 1000
+            },
+            {
+              "name": "Расходники  от сметы",
+              "unit": "%",
+              "qty": 3,
+              "price": 13101.6
             }
           ],
           "ksList": []
@@ -298,5 +304,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T18:33:27.334Z"
+  "updatedAt": "2026-07-07T18:34:42.045Z"
 }
