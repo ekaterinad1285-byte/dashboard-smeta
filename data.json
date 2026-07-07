@@ -1,1 +1,56 @@
-{"objects":[],"payments":[],"invites":[]}
+{
+  "objects": [
+    {
+      "id": 1,
+      "name": "Сущевский вал",
+      "estimates": [
+        {
+          "id": 101,
+          "name": "Снос №1 у Арки",
+          "budget": 0,
+          "done": 0,
+          "status": "completed",
+          "works": [],
+          "ksList": []
+        },
+        {
+          "id": 102,
+          "name": "Главная лестница",
+          "budget": 0,
+          "done": 0,
+          "status": "completed",
+          "works": [],
+          "ksList": []
+        },
+        {
+          "id": 103,
+          "name": "Снос не жилого здания",
+          "budget": 0,
+          "done": 0,
+          "status": "completed",
+          "works": [],
+          "ksList": []
+        },
+        {
+          "id": 104,
+          "name": "Внутренние строительно-монтажные и отделочные работы. Смета №25/06",
+          "budget": 0,
+          "done": 0,
+          "status": "completed",
+          "works": [],
+          "ksList": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Начатки",
+      "estimates": []
+    }
+  ],
+  "payments": [],
+  "invites": [],
+  "adminPass": "YWRtaW4xMjM=",
+  "version": "3.0",
+  "updatedAt": "2026-07-07T17:13:03.717Z"
+}
