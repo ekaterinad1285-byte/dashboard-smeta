@@ -816,7 +816,7 @@
           "ksList": [
             {
               "id": 7,
-              "name": "КС-2-07 (остаток)",
+              "name": "КС-2 №1",
               "ksNumber": "КС-2-07",
               "advance": 0,
               "budget": 76200,
@@ -868,5 +868,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:37:41.851Z"
+  "updatedAt": "2026-07-07T17:37:55.538Z"
 }
