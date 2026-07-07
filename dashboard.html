@@ -466,14 +466,27 @@ async function pushToGist(retryCount = 0) {
         const invites = data.invites || JSON.parse(localStorage.getItem('dashInvites') || '[]');
         const adminPass = localStorage.getItem('dashAdminPass') || '';
         
+        // === ОСНОВНОЙ БЛОК ДАННЫХ ===
         const fullData = {
-            objects: data.objects,
-            payments: data.payments,
+            objects: data.objects || [],
+            payments: data.payments || [],
             invites: invites,
-            adminPass: adminPass,
+            adminPass: adminPass || '',
             version: '3.0',
             updatedAt: new Date().toISOString()
         };
+        // ===============================
+        
+        // Проверяем, что JSON валидный
+        let jsonString;
+        try {
+            jsonString = JSON.stringify(fullData, null, 2);
+        } catch (e) {
+            throw new Error('Ошибка сериализации JSON: ' + e.message);
+        }
+        
+        // Логируем для отладки
+        console.log('📤 Отправляем в Gist:', jsonString);
         
         const headers = {
             'Authorization': `token ${GIST_TOKEN}`,
@@ -491,13 +504,13 @@ async function pushToGist(retryCount = 0) {
             body: JSON.stringify({
                 files: {
                     [GIST_FILE_NAME]: {
-                        content: JSON.stringify(fullData, null, 2)
+                        content: jsonString
                     }
                 }
             })
         });
         
-        // ===== ОБРАБОТКА ОШИБКИ 409 =====
+        // === ОБРАБОТКА ОШИБКИ 409 ===
         if (response.status === 409) {
             if (retryCount < 3) {
                 console.warn(`⚠️ Конфликт (409), попытка ${retryCount + 1} из 3...`);
@@ -508,7 +521,15 @@ async function pushToGist(retryCount = 0) {
                 throw new Error('Не удалось разрешить конфликт после 3 попыток');
             }
         }
-        // =================================
+        // ==============================
+        
+        // === ОБРАБОТКА ОШИБКИ 400 ===
+        if (response.status === 400) {
+            const errorText = await response.text();
+            console.error('❌ Ошибка 400, ответ сервера:', errorText);
+            throw new Error(`Ошибка 400: ${errorText}`);
+        }
+        // ==============================
         
         if (!response.ok) {
             throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
