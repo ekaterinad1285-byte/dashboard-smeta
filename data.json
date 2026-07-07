@@ -30,7 +30,40 @@
               "price": 2000
             }
           ],
-          "ksList": []
+          "ksList": [
+            {
+              "id": 1,
+              "name": "КС-2-01 (остаток)",
+              "ksNumber": "КС-2-01",
+              "advance": 0,
+              "budget": 375250,
+              "done": 0,
+              "status": "active",
+              "works": [
+                {
+                  "name": "Новая работа",
+                  "unit": "шт",
+                  "qty": 15,
+                  "price": 350,
+                  "done": 0
+                },
+                {
+                  "name": "Новая работа",
+                  "unit": "шт",
+                  "qty": 100,
+                  "price": 1700,
+                  "done": 0
+                },
+                {
+                  "name": "Новая работа",
+                  "unit": "шт",
+                  "qty": 100,
+                  "price": 2000,
+                  "done": 0
+                }
+              ]
+            }
+          ]
         },
         {
           "id": 102,
@@ -71,5 +104,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:15:08.449Z"
+  "updatedAt": "2026-07-07T17:15:14.156Z"
 }
