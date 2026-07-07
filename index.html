@@ -312,6 +312,10 @@
 // ============================================================
 
 const REPO_FILE_PATH = 'data.json';
+    // Функция для кодирования UTF-8 в Base64 (поддерживает русские буквы)
+function utf8ToBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
 
 function utf8ToBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
