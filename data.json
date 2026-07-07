@@ -105,12 +105,12 @@
       "id": 1,
       "estimateId": 101,
       "amount": 10000,
-      "date": "2026-07-15",
+      "date": "2026-06-15",
       "type": "advance"
     }
   ],
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:30:46.272Z"
+  "updatedAt": "2026-07-07T17:31:48.124Z"
 }
