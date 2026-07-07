@@ -100,9 +100,17 @@
       "estimates": []
     }
   ],
-  "payments": [],
+  "payments": [
+    {
+      "id": 1,
+      "estimateId": 101,
+      "amount": 10000,
+      "date": "2026-07-15",
+      "type": "advance"
+    }
+  ],
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:29:40.528Z"
+  "updatedAt": "2026-07-07T17:30:41.767Z"
 }
