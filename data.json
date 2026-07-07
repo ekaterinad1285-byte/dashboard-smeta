@@ -357,8 +357,8 @@
           "id": 4,
           "name": "Снос перехода мост",
           "budget": 327282.5,
-          "done": 0,
-          "status": "active",
+          "done": 327282.5,
+          "status": "completed",
           "works": [
             {
               "name": "Демонтаж кровли, перекрытия, стен вручную",
@@ -398,43 +398,43 @@
               "ksNumber": "КС-2-03",
               "advance": 0,
               "budget": 327282.5,
-              "done": 0,
-              "status": "active",
+              "done": 327282.5,
+              "status": "completed",
               "works": [
                 {
                   "name": "Демонтаж кровли, перекрытия, стен вручную",
                   "unit": "м2",
                   "qty": 82.5,
                   "price": 2700,
-                  "done": 0
+                  "done": 82.5
                 },
                 {
                   "name": "Аренда компрессора",
                   "unit": "смен",
                   "qty": 2,
                   "price": 13000,
-                  "done": 0
+                  "done": 2
                 },
                 {
                   "name": "Аренда JCB погрузчик",
                   "unit": "смен",
                   "qty": 1,
                   "price": 25000,
-                  "done": 0
+                  "done": 1
                 },
                 {
                   "name": "Аренда самосвалов 20м3 (по факту)",
                   "unit": "смен",
                   "qty": 2,
                   "price": 22000,
-                  "done": 0
+                  "done": 2
                 },
                 {
                   "name": "Расходники  от сметы",
                   "unit": "%",
                   "qty": 3,
                   "price": 3177.5,
-                  "done": 0
+                  "done": 3
                 }
               ]
             }
@@ -452,5 +452,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T18:38:13.091Z"
+  "updatedAt": "2026-07-07T18:38:31.027Z"
 }
