@@ -635,8 +635,8 @@
           "id": 103,
           "name": "Снос не жилого здания",
           "budget": 1279800,
-          "done": 1278550,
-          "status": "active",
+          "done": 1279800,
+          "status": "completed",
           "works": [
             {
               "name": "Демонтаж Потолков 1го (частично) 2го 3го этажей,",
@@ -769,19 +769,19 @@
             },
             {
               "id": 6,
-              "name": "КС-2-06 (остаток)",
+              "name": "КС-2 №3",
               "ksNumber": "КС-2-06",
               "advance": 0,
               "budget": 1250,
-              "done": 0,
-              "status": "active",
+              "done": 1250,
+              "status": "completed",
               "works": [
                 {
                   "name": "Демонтаж Потолков 1го (частично) 2го 3го этажей,",
                   "unit": "м2",
                   "qty": 5,
                   "price": 250,
-                  "done": 0
+                  "done": 5
                 }
               ]
             }
@@ -790,10 +790,23 @@
         {
           "id": 104,
           "name": "Внутренние строительно-монтажные и отделочные работы. Смета №25/06",
-          "budget": 0,
+          "budget": 1200,
           "done": 0,
-          "status": "completed",
-          "works": [],
+          "status": "active",
+          "works": [
+            {
+              "name": "Новая работа",
+              "unit": "шт",
+              "qty": 10,
+              "price": 120
+            },
+            {
+              "name": "Новая работа",
+              "unit": "шт",
+              "qty": 150,
+              "price": 0
+            }
+          ],
           "ksList": []
         }
       ]
@@ -816,5 +829,5 @@
   "invites": [],
   "adminPass": "YWRtaW4xMjM=",
   "version": "3.0",
-  "updatedAt": "2026-07-07T17:36:04.083Z"
+  "updatedAt": "2026-07-07T17:37:09.623Z"
 }
