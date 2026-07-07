@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сметы и КС | Дашборд</title>
+    <title>Сметы и КС | Локальный дашборд</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #f1f5f9; color: #1e293b; padding: 16px; }
@@ -161,6 +161,7 @@
                 <button class="btn btn-sm btn-success" onclick="exportData()">📤 Экспорт</button>
                 <button class="btn btn-sm btn-primary" onclick="document.getElementById('importFileInput').click()">📥 Импорт</button>
                 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
+                <button class="btn btn-sm btn-danger" onclick="resetAllData()">🗑️ Сбросить</button>
                 <span style="font-size:14px; color:#64748b;" id="userInfo"></span>
                 <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
             </div>
@@ -225,7 +226,7 @@
     </div>
 </div>
 
-<!-- Модалки (те же, что были, без изменений) -->
+<!-- Модалки (те же, что были) -->
 <div class="modal-overlay" id="inviteModal"><div class="modal">
     <div class="modal-title" id="inviteModalTitle">📨 Создать приглашение</div>
     <label>👤 Имя руководителя</label>
@@ -291,7 +292,7 @@
 
 <script>
 // ============================================================
-// ПРОСТАЯ ЛОКАЛЬНАЯ ВЕРСИЯ — БЕЗ GitHub API
+// ЛОКАЛЬНАЯ ВЕРСИЯ С ПОДДЕРЖКОЙ КИРИЛЛИЦЫ
 // ============================================================
 
 let data = loadData();
@@ -347,7 +348,7 @@ function updateSyncStatus(text, type = '') {
 }
 
 // ============================================================
-// 2. ЭКСПОРТ/ИМПОРТ ДАННЫХ
+// 2. ЭКСПОРТ/ИМПОРТ
 // ============================================================
 
 function exportData() {
@@ -385,7 +386,19 @@ function importData(event) {
 }
 
 // ============================================================
-// 3. АВТОРИЗАЦИЯ И ПРИГЛАШЕНИЯ
+// 3. СБРОС ДАННЫХ (ОЧИСТКА)
+// ============================================================
+
+function resetAllData() {
+    if (confirm('⚠️ Удалить все данные? Это действие необратимо.')) {
+        localStorage.clear();
+        alert('✅ Данные удалены. Страница будет перезагружена.');
+        location.reload();
+    }
+}
+
+// ============================================================
+// 4. АВТОРИЗАЦИЯ И ПРИГЛАШЕНИЯ
 // ============================================================
 
 function getInvites() {
@@ -548,7 +561,7 @@ function updateButtonsByRole() {
 })();
 
 // ============================================================
-// 4. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
+// 5. УПРАВЛЕНИЕ ПРИГЛАШЕНИЯМИ
 // ============================================================
 
 function openInviteModal() {
@@ -651,7 +664,7 @@ function deleteInvite(id) { if (!isAdmin()) return; const invites = getInvites()
 function copyInviteLinkById(id) { const invites = getInvites(); const inv = invites.find(i => i.id === id); if (!inv || !inv.link) return; if (navigator.clipboard) { navigator.clipboard.writeText(inv.link).then(() => { alert('📋 Ссылка скопирована!'); }).catch(() => { prompt('Скопируйте ссылку вручную:', inv.link); }); } else { prompt('Скопируйте ссылку вручную:', inv.link); } }
 
 // ============================================================
-// 5. ОСНОВНЫЕ ФУНКЦИИ (без изменений)
+// 6. ОСНОВНЫЕ ФУНКЦИИ (без изменений)
 // ============================================================
 
 function generateId(type) {
@@ -737,7 +750,7 @@ function recalcAll() {
 }
 
 // ============================================================
-// 6. РЕНДЕРИНГ (СОКРАЩЕН)
+// 7. РЕНДЕРИНГ
 // ============================================================
 
 function render() {
@@ -831,7 +844,7 @@ function renderAnalytics() {
 }
 
 // ============================================================
-// 7. МОДАЛКИ (СОКРАЩЕНЫ, НО ПОЛНОСТЬЮ РАБОЧИЕ)
+// 8. МОДАЛКИ (СОКРАЩЕНЫ, НО ПОЛНОСТЬЮ РАБОЧИЕ)
 // ============================================================
 
 let ctx = { type: '', objId: null, estId: null };
@@ -878,7 +891,7 @@ function renderPaymentTree() { let c = document.getElementById('paymentTreeConta
 function toggleP(el) { let c = el.parentElement.querySelector('.children'); let t = el.querySelector('.toggle'); if (c) { if (c.style.display === 'none') { c.style.display = 'block'; t.textContent = '▼'; } else { c.style.display = 'none'; t.textContent = '▶'; } } }
 
 // ============================================================
-// 8. ЗАПУСК
+// 9. ЗАПУСК
 // ============================================================
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -916,6 +929,7 @@ window.attemptLogin = attemptLogin;
 window.logout = logout;
 window.exportData = exportData;
 window.importData = importData;
+window.resetAllData = resetAllData;
 window.openInviteModal = openInviteModal;
 window.closeInviteModal = closeInviteModal;
 window.saveInvite = saveInvite;
