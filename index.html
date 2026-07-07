@@ -312,13 +312,15 @@
 // ============================================================
 
 const REPO_FILE_PATH = 'data.json';
-    // Функция для кодирования UTF-8 в Base64 (поддерживает русские буквы)
-function utf8ToBase64(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-}
 
 function utf8ToBase64(str) {
-    return btoa(unescape(encodeURIComponent(str)));
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 let REPO_OWNER = localStorage.getItem('repoOwner') || '';
